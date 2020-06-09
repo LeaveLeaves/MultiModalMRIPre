@@ -91,7 +91,8 @@ class preprocess():
         match_PSM.match(method = 'min', nmatches = 1, threshold = 0.0001)
         
         #get the matched balanced data
-        HC_ND_matched = match_PSM.matched_data[['eid', 'file_path', 'label']].sort_values('label', ascending = False)
+        HC_ND_matched = match_PSM.matched_data[['eid', 'file_path', 'label']].sort_values('label', ascending = False).reset_index(drop = True, inplace = True)
+
         
         return HC_ND_matched
 
