@@ -105,7 +105,7 @@ class preprocess():
             
         retrun np.reshape(np.array(mri), (-1, mri[0].shape[1]))
        
-#do nested cross validation    
+#do nested cross validation using SVM, Logistic regression and random forest
 def NestedCV(self, X, y, cv_fold, base_model, p_grid, i)
     accuracy = []
     f1 = []
