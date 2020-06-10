@@ -71,7 +71,7 @@ class preprocess():
         ND_modal_pheno: DataFrame
         Phenotype information DataFrame of ND in one modality
         '''
-        #select relevant phenotype: sex, age, ethnity,smoking status, BMI, label samples
+        #select relevant phenotype: sex, age, ethnicity,smoking status, BMI, label samples
         HC_Match = HC_modal_pheno[["eid", "31-0.0", "34-0.0", "21000-0.0", "1239-0.0", "1239-1.0", "1239-2.0", 
                                    "21001-0.0", "21001-1.0", "21001-2.0", "file_path"]]
         HC_Match[["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]] = HC_Match [["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]].astype(float)
