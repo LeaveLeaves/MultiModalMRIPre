@@ -72,27 +72,25 @@ class preprocess():
         Phenotype information DataFrame of ND in one modality
         '''
         #select relevant phenotype: sex, age, ethnicity,smoking status, BMI, label samples
-        HC_Match = HC_modal_pheno[["eid", "31-0.0", "34-0.0", "21000-0.0", "1239-0.0", "1239-1.0", "1239-2.0", 
-                                   "21001-0.0", "21001-1.0", "21001-2.0", "file_path"]]
-        HC_Match[["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]] = HC_Match [["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]].astype(float)
-        HC_Match = HC_Match.fillna(method = 'ffill')
+        HC_Match = HC_modal_pheno[["eid", "31-0.0", "34-0.0", "file_path"]]
+        HC_Match[["34-0.0"]] = HC_Match [["34-0.0"]].astype(float)
+        #HC_Match = HC_Match.fillna(method = 'ffill')
         HC_Match['label'] = 0
         
-        ND_Match = ND_modal_pheno[["eid", "31-0.0", "34-0.0", "21000-0.0", "1239-0.0", "1239-1.0", "1239-2.0", 
-                                   "21001-0.0", "21001-1.0", "21001-2.0", "file_path"]]
-        ND_Match[["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]] = ND_Match [["34-0.0", "21001-0.0", "21001-1.0", "21001-2.0"]].astype(float)
-        ND_Match = ND_Match.fillna(method = 'ffill')
+        ND_Match = ND_modal_pheno[["eid", "31-0.0", "34-0.0", "file_path"]]
+        ND_Match[["34-0.0"]] = ND_Match [["34-0.0"]].astype(float)
+        #ND_Match = ND_Match.fillna(method = 'ffill')
         ND_Match['label'] = 1
         
         #Caulate propensity score and match them
         match_PSM = Matcher(ND_Match, HC_Match, yvar="label", exclude=['eid', 'file_path'])
-        np.random.seed(20170925)
-        match_PSM.fit_scores(balance = True, nmodels = 100)
-        match_PSM.match(method = 'min', nmatches = 1, threshold = 0.0001)
+        np.random.seed(20200624)
+        match_PSM.fit_scores(balance = True, nmodels = 1000)
+        match_PSM.match(method = 'min', nmatches = 1, threshold = 0.001)
         
         #get the matched balanced data
-        HC_ND_matched = match_PSM.matched_data[['eid', 'file_path', 'label']].sort_values('label', ascending = False).reset_index(drop = True, inplace = True)
-
+        HC_ND_matched = match_PSM.matched_data[['eid', 'file_path', 'label']].sort_values('label', ascending = False)
+        HC_ND_matched.reset_index(drop = True, inplace = True)
         
         return HC_ND_matched
 
