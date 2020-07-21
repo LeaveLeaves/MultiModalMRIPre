@@ -1,0 +1,108 @@
+import numpy as np
+import pandas as pd
+from nilearn import datasets
+from nilearn.image import new_img_like, load_img, get_data
+from sklearn.model_selection import KFold
+from nilearn.image import index_img
+import nilearn.decoding
+from nilearn.input_data import NiftiMasker
+import nilearn as nil
+import nibabel as nib
+import time
+
+dimension = []
+for i in range(0, filename.shape[0]):
+    dimension.append(nib.load(filename['file'].loc[i]).shape[3])
+
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
+
+#Label experiment condition
+shape = np.repeat('shapes', 21)
+face = np.repeat('faces', 21)
+label = np.repeat('rest', 332)
+designS = [0, 71, 100, 171, 200]
+designF = [21, 50, 121, 150, 221]
+for i in designS:
+    label[i:i+21] = shape   
+for j in designF:
+    label[j:j+21] = face  
+labels = pd.DataFrame(label, columns = ['labels'])
+y = labels['labels']
+#Restrict to shapes and face
+condition_mask = y.isin(['shap', 'face'])
+y = y[condition_mask]
+
+label1 = np.repeat('rest', 366)
+for i in designS:
+    label1[i:i+21] = shape
+   
+for j in designF:
+    label1[j:j+21] = face
+labels1 = pd.DataFrame(label1, columns = ['labels'])
+y1 = labels1['labels']
+#Restrict to shapes and face
+condition_mask1 = y1.isin(['shap', 'face'])
+y1 = y1[condition_mask1]
+
+
+#fmri_img = index_img(filename['file'].loc[9], condition_mask)
+#Compute mask
+nifti_masker = NiftiMasker(mask_strategy='template', memory="nilearn_cache",  memory_level=1)
+
+#for i in range(0, filename.shape[0])：:
+   # mask_fmri = nifti_masker.fit(filename['file'].loc[i]).mask_img_
+
+n_jobs = 10
+import time
+from sklearn.model_selection import KFold
+cv = KFold(n_splits=4)
+#from sklearn.ensemble import RandomForestClassifier
+import nilearn.decoding
+
+nifti_masker = NiftiMasker(mask_strategy='template', memory="nilearn_cache",  memory_level=1)
+def using_multiindex(A, columns):
+    shape = A.shape
+    index = pd.MultiIndex.from_product([range(s)for s in shape], names=columns)
+    df = pd.DataFrame({'A': A.flatten()}, index=index).reset_index()
+    return df
+
+score = []
+for i in range(0, filename.shape[0]):
+    start_time = time.time()
+    mask_fmri = nifti_masker.fit(filename['file'].loc[i]).mask_img_
+    searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs=n_jobs, verbose=1, cv=cv)
+    if (nib.load(filename['file'].loc[i]).shape[3] == 366):
+        fmri_img = index_img(filename['file'].loc[i], condition_mask1)
+        searchlight.fit(fmri_img, y1)
+    else:
+        fmri_img = index_img(filename['file'].loc[i], condition_mask)
+        searchlight.fit(fmri_img, y)
+    score.append(searchlight.scores_)
+    print(i)
+    print(score[i].shape)
+    print(time.time() - start_time)
+
+score = np.load('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/searchlight_score.npy')
+tfmri_masked = []
+for i in range(0, filename.shape[0]):
+    start_time = time.time()
+    mask_fmri = nifti_masker.fit(filename['file'].loc[i]).mask_img_
+    df = using_multiindex(score[i], list('XYZ'))
+    dff = df.sort_values(by = ['A'], ascending = False)
+    dff.reset_index(drop = True, inplace = True)
+    dff_sorted = dff.loc[0:30557]
+    score_binary = np.zeros_like(score[i])
+    for j in range(dff_sorted.shape[0]):
+        score_binary[dff_sorted['X'][j]][dff_sorted['Y'][j]][dff_sorted['Z'][j]] = 1
+    score_mask =  new_img_like(mask_fmri, score_binary)
+    if (nib.load(filename['file'].loc[i]).shape[3] == 366):
+        fmri_img = index_img(filename['file'].loc[i], condition_mask1)
+    else:
+        fmri_img = index_img(filename['file'].loc[i], condition_mask)
+    masker = NiftiMasker(mask_strategy='template', mask_img = score_mask, memory="nilearn_cache", memory_level=1)
+    tfmri_masked.append(masker.fit_transform(fmri_img))
+    print(i)    
+    print(tfmri_masked[i].shape)
+    print(time.time() - start_time)
+
+np.save('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMRI_searchlight_min30558_masked', tfmri_masked)
