@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+from nilearn import datasets
+from nilearn.image import new_img_like, load_img, get_data
+from sklearn.model_selection import KFold
+from nilearn.image import index_img
+import nilearn.decoding
+from nilearn.input_data import NiftiMasker
+import nilearn as nil
+import nibabel as nib
+import time
+
+class Searchlight_tfMRI:
+    def _init_(self, ND_HC_path, HC_path, pheno_path, modal_path):
+        self.ND_HC_path = ND_HC_path
+        self.HC_path = HC_path
+        self.pheno_path = pheno_path
+        self.modal_path = modal_path
+        
+    def prerocess(self):
+        filename = pd.read_csv(self.ND_HC_path, dtype = str)
+        shape = np.repeat('shapes', 21)
+        face = np.repeat('faces', 21)
+        label = np.repeat('rest', 332)
+        designS = [0, 71, 100, 171, 200]
+        designF = [21, 50, 121, 150, 221]
+        for i in designS:
+            label[i:i+21] = shape
+        for j in designF:
+            label[j:j+21] = face
+        labels = pd.DataFrame(label, columns = ['labels'])
+        y = labels['labels']#Restrict to shapes and face
+        condition_mask = y.isin(['shap', 'face'])
+        y = y[condition_mask]
+        label1 = np.repeat('rest', 366)
+        
+        for i in designS:
+            label1[i:i+21] = shape
+        for j in designF:
+            label1[j:j+21] = face
+        labels1 = pd.DataFrame(label1, columns = ['labels'])
+        y1 = labels1['labels']
+        #Restrict to shapes and face
+        condition_mask1 = y1.isin(['shap', 'face'])
+        y1 = y1[condition_mask1]
+        return condition_mask, condition_mask1, y, y1
+    
+    def using_multiindex(score_matrix, cols):
+        shape = score_matrix.shape
+        index = pd.MultiIndex.from_product([range(s)for s in shape], names=cols)
+        df = pd.DataFrame({'score_matrix': score_matrix.flatten()}, index=index).reset_index()
+        return df
+    
+    def Searchlight_score(self, n_jobs, n_splits, condition_mask, condition_mask1, y, y1):
+        cv = KFold(n_splits = n_splits)
+        nifti_masker = NiftiMasker(mask_strategy='template', memory="nilearn_cache",  memory_level=1)
+        score = []
+        for i in range(0, filename.shape[0]):
+            start_time = time.time()
+            mask_fmri = nifti_masker.fit(filename['file'].loc[i]).mask_img_
+            searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs=n_jobs, verbose=1, cv=cv)
+            if (nib.load(filename['file'].loc[i]).shape[3] == 366):
+                fmri_img = index_img(filename['file'].loc[i], condition_mask1)
+                searchlight.fit(fmri_img, y1)
+            else:
+                fmri_img = index_img(filename['file'].loc[i], condition_mask)
+                searchlight.fit(fmri_img, y)
+            
+        score.append(searchlight.scores_)
+        return score
