@@ -68,3 +68,35 @@ class Searchlight_tfMRI:
             
         score.append(searchlight.scores_)
         return score
+        
+def label_condition(con1,con2):
+    shape = np.repeat('shapes', 21)
+    face = np.repeat('faces', 21)
+    label = np.repeat('rest', 332)
+    designS = [0, 71, 100, 171, 200]
+    designF = [21, 50, 121, 150, 221]
+    for i in designS:
+        label[i:i+21] = shape
+    for j in designF:
+        label[j:j+21] = face
+    labels = pd.DataFrame(label, columns = ['labels'])
+    y = labels['labels']
+    #Restrict to shapes and face
+    #condition_mask = y.isin(['shap', 'face'])
+    #condition_mask = y.isin(['rest', 'face'])
+    condition_mask = y.isin([con1, con2])
+    #y = y[condition_mask]
+    
+    label1 = np.repeat('rest', 366)
+    for i in designS:
+        label1[i:i+21] = shape 
+    for j in designF:
+        label1[j:j+21] = face
+    labels1 = pd.DataFrame(label1, columns = ['labels'])
+    y1 = labels1['labels']
+    #Restrict to shapes and face
+    condition_mask1 = y1.isin(['shap', 'face'])
+    #condition_mask1 = y1.isin(['rest', 'face'])
+    condition_mask = y.isin([con1, con2])
+    #y1 = y1[condition_mask1]
+    return condition_mask, y[condition_mask], condition_mask1, y1[condition_mask1]
