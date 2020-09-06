@@ -180,28 +180,9 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
         print(i)
         print(time.time() - start_time)
     return score_mask
-m = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1, template = template)
+s = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train, mask_int = mask_int, C = 0.1, template = template)
 
-score = np.load('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_score_FaceRest.npy')
-mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
-masks_int = []
-for i in range(0, filename.shape[0]):
-    start_time = time.time()
-    df = using_multiindex(score[i], list('XYZ'))
-    dff = df.loc[df['A'] > 0.5]
-    dff.reset_index(drop = True, inplace = True)
-    score_binary = np.zeros_like(score[i])
-    for j in range(dff.shape[0]):
-        score_binary[dff['X'][j]][dff['Y'][j]][dff['Z'][j]] = 1
-    score_mask =  new_img_like(mask_fmri, score_binary)
-    masks_int.append(score_mask)
-    print(i)    
-    print(masks_int[i].shape)
-    print(time.time() - start_time)
-
-mask_inter_85 = intersect_masks(masks_int, threshold = 0.85)
-with open('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfmri_searchlight05_masks', "wb") as fp:
-    pickle.dump(masks_int, fp)
+mask_inter_85 = intersect_masks(s, threshold = 0.85)
 
 from joblib import Parallel, delayed
 condition_mask1.loc[332:] = False
