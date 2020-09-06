@@ -135,6 +135,21 @@ def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
 
 m = tfMRI_searchlight_raw(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
 
+###############################################################################################################################################
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
+y = np.repeat([1, 0], 234).ravel()
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
+j = 0
+train, test = list(outer_cv.split(filename, y))[j]
+x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
+y_train, y_test = y[train], y[test]
+h = 0
+inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
+x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
+y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
+##############################################################################################################################################
+
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
 template = nib.load(filename['file'].loc[9])
 def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
