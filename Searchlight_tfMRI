@@ -174,14 +174,16 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
         dff = df.loc[df['A'] > 0.5]
         dff.reset_index(drop = True, inplace = True)
         score_binary = np.zeros_like(score)
-        for j in range(dff.shape[0]):
-            score_binary[dff['X'][j]][dff['Y'][j]][dff['Z'][j]] = 1
+        for k in range(dff.shape[0]):
+            score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
         score_mask.append(new_img_like(mask_fmri, score_binary))
         print(i)
         print(time.time() - start_time)
     return score_mask
+    
+start_time1 = time.time()
 s = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train, mask_int = mask_int, C = 0.1, template = template)
-
+print(time.time() - start_time1)
 mask_inter_85 = intersect_masks(s, threshold = 0.85)
 
 from joblib import Parallel, delayed
