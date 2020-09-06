@@ -171,7 +171,7 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
             searchlight.fit(fmri_img, y)
         score = searchlight.scores_
         df = using_multiindex(score, list('XYZ'))
-        dff = df.loc[df['A'] > 0.5 | df['A'] == 'nan']
+        dff = df.loc[df['A'] > 0.5]
         dff.reset_index(drop = True, inplace = True)
         score_binary = np.zeros_like(score)
         for j in range(dff.shape[0]):
