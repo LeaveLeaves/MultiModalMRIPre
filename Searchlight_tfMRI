@@ -165,7 +165,7 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
         print(i)
         print(time.time() - start_time)
     return score_mask
-m = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
+m = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1, template = template)
 
 score = np.load('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_score_FaceRest.npy')
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
