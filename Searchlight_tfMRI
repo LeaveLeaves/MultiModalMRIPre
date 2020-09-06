@@ -136,7 +136,7 @@ def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
 m, tf = tfMRI_searchlight_raw(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
 
 template = nib.load(filename['file'].loc[9])
-def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C = C):
+def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
     model =  LinearSVC(dual = False, max_iter = 10000, C = C)
@@ -145,11 +145,11 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C = C):
         start_time = time.time()
         mask_fmri = mask_int
         searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs=n_jobs, verbose=1, cv=cv, estimator = model)
-        if (nib.load(tfmri_filename[i]).shape[3] == 366):
-            fmri_img = index_img(tfmri_filename[i], condition_mask1)
+        if (re.shape[3] == 366):
+            fmri_img = index_img(re, condition_mask1)
             searchlight.fit(fmri_img, y1)
         else:
-            fmri_img = index_img(tfmri_filename[i], condition_mask)
+            fmri_img = index_img(re, condition_mask)
             searchlight.fit(fmri_img, y)
         score = searchlight.scores_
         df = using_multiindex(score, list('XYZ'))
