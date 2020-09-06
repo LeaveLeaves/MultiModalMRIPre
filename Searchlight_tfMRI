@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from nilearn import datasets
 from nilearn.image import new_img_like, load_img, get_data
+from nilearn.image import resample_to_img
 from sklearn.model_selection import KFold
 from nilearn.image import index_img
 import nilearn.decoding
