@@ -134,6 +134,7 @@ def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     return score_mask, tfmri_masked
 
 m = tfMRI_searchlight_raw(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
+
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
 template = nib.load(filename['file'].loc[9])
 def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C):
@@ -154,7 +155,7 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C):
             searchlight.fit(fmri_img, y)
         score = searchlight.scores_
         df = using_multiindex(score, list('XYZ'))
-        dff = df.loc[dff['A'] > 0.5 | dff['A'] == 'nan']
+        dff = df.loc[df['A'] > 0.5 | df['A'] == 'nan']
         dff.reset_index(drop = True, inplace = True)
         score_binary = np.zeros_like(score)
         for j in range(dff_sorted.shape[0]):
@@ -163,8 +164,7 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C):
         print(i)
         print(time.time() - start_time)
     return score_mask
-
-m, tf = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
+m = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train[0:25], mask_int = mask_int, C = 0.1)
 
 score = np.load('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_score_FaceRest.npy')
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
