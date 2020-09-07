@@ -86,7 +86,8 @@ def label_condition(con1,con2):
     #condition_mask = y.isin(['shap', 'face'])
     #condition_mask = y.isin(['rest', 'face'])
     condition_mask = y.isin([con1, con2])
-    #y = y[condition_mask]
+    y = y[condition_mask]
+    y.reset_index(drop = True, inplace = True)
     
     label1 = np.repeat('rest', 366)
     for i in designS:
@@ -99,10 +100,12 @@ def label_condition(con1,con2):
     condition_mask1 = y1.isin(['shap', 'face'])
     #condition_mask1 = y1.isin(['rest', 'face'])
     condition_mask = y.isin([con1, con2])
-    #y1 = y1[condition_mask1]
-    return condition_mask, y[condition_mask], condition_mask1, y1[condition_mask1]
+    y1 = y1[condition_mask1]
+    y1.reset_index(drop = True, inplace = True)
+    return condition_mask, y, condition_mask1, y1
     
-    
+condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
+
 def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
@@ -152,7 +155,7 @@ y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
 
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
 template = nib.load(filename['file'].loc[9])
-def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
+def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template, y, y1, condition_mask, condition_mask1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
     model =  LinearSVC(dual = False, max_iter = 10000, C = C)
@@ -168,7 +171,7 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
             searchlight.fit(fmri_img, y1)
         else:
             fmri_img = index_img(re, condition_mask)
-            searchlight.fit(fmri_img, y)
+            searchlight.fit(fmri_img, y0)
         score = searchlight.scores_
         df = using_multiindex(score, list('XYZ'))
         dff = df.loc[df['A'] > 0.5]
@@ -182,8 +185,9 @@ def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template):
     return score_mask
     
 start_time1 = time.time()
-s = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train, mask_int = mask_int, C = 0.1, template = template)
+s = tfMRI_searchlight(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_train, mask_int = mask_int, C = 0.1, template = template, y = y0, y1 = y1, condition_mask = condition_mask, condition_mask1 = condition_mask1)
 print(time.time() - start_time1)
+
 mask_inter_85 = intersect_masks(s, threshold = 0.85)
 
 from joblib import Parallel, delayed
