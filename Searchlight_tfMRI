@@ -97,9 +97,9 @@ def label_condition(con1,con2):
     labels1 = pd.DataFrame(label1, columns = ['labels'])
     y1 = labels1['labels']
     #Restrict to shapes and face
-    condition_mask1 = y1.isin(['shap', 'face'])
+    #condition_mask1 = y1.isin(['shap', 'face'])
     #condition_mask1 = y1.isin(['rest', 'face'])
-    condition_mask = y.isin([con1, con2])
+    condition_mask1 = y1.isin([con1, con2])
     y1 = y1[condition_mask1]
     y1.reset_index(drop = True, inplace = True)
     return condition_mask, y, condition_mask1, y1
