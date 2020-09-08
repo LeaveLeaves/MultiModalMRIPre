@@ -108,6 +108,12 @@ def label_condition(con1,con2):
     
 condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
 
+def using_multiindex(A, columns):
+    shape = A.shape
+    index = pd.MultiIndex.from_product([range(s)for s in shape], names=columns)
+    df = pd.DataFrame({'A': A.flatten()}, index=index).reset_index()
+    return df
+
 def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
@@ -213,9 +219,9 @@ tfmri_masked = []
 score_mask = []
 
 mask_fmri = mask_int
-searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs=n_jobs, verbose=1, cv=cv, estimator = model)
+searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs = 10, verbose=1, cv=cv, estimator = model)
 
-i = 0
+i = 1
 start_time = time.time()
 re = resample_to_img(x_test[i], template)
 if (re.shape[3] == 366):
@@ -231,12 +237,12 @@ dff.reset_index(drop = True, inplace = True)
 score_binary = np.zeros_like(score)
 for k in range(dff.shape[0]):
     score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
-nib.save(new_img_like(mask_fmri, score_binary), )
+nib.save(new_img_like(mask_fmri, score_binary), "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_test[i][2:9]))
 print(i)
 print(time.time() - start_time)
 
-
-
+for i in range(0, x_inner_train.shape[0]):
+    nib.save(s, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9]))
 
 
 
