@@ -230,6 +230,7 @@ if (re.shape[3] == 366):
 else:
     fmri_img = index_img(re, condition_mask)
     searchlight.fit(fmri_img, y0)
+
 score = searchlight.scores_
 df = using_multiindex(score, list('XYZ'))
 dff = df.loc[df['A'] > 0.5]
