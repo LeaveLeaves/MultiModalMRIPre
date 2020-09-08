@@ -221,7 +221,7 @@ score_mask = []
 mask_fmri = mask_int
 searchlight = nilearn.decoding.SearchLight(mask_fmri, n_jobs = 10, verbose=1, cv=cv, estimator = model)
 
-i = 4
+i = 5
 start_time = time.time()
 re = resample_to_img(x_test[i], template)
 if (re.shape[3] == 366):
@@ -244,7 +244,7 @@ print(sum(sum(sum(score_binary))))
 print(i)
 print(time.time() - start_time)
 
-for i in range(4, x_test.shape[0]):
+for i in range(, x_test.shape[0]):
     start_time = time.time()
     re = resample_to_img(x_test[i], template)
     if (re.shape[3] == 366):
