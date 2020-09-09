@@ -244,7 +244,7 @@ print(sum(sum(sum(score_binary))))
 print(i)
 print(time.time() - start_time)
 
-for i in range(, x_test.shape[0]):
+for i in range(6, x_test.shape[0]):
     start_time = time.time()
     re = resample_to_img(x_test[i], template)
     if (re.shape[3] == 366):
@@ -253,7 +253,6 @@ for i in range(, x_test.shape[0]):
     else:
         fmri_img = index_img(re, condition_mask)
         searchlight.fit(fmri_img, y0)
-
     score = searchlight.scores_
     df = using_multiindex(score, list('XYZ'))
     dff = df.loc[df['A'] > 0.5]
@@ -261,9 +260,8 @@ for i in range(, x_test.shape[0]):
     score_binary = np.zeros_like(score)
     for k in range(dff.shape[0]):
         score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
-
     nib.save(new_img_like(mask_fmri, score_binary), "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_test[i][2:9]))
-    print(sum(sum(sum(score_binary))))
+    print(np.unique(score_binary, return_counts = True))
     print(i)
     print(time.time() - start_time)
 
