@@ -114,6 +114,10 @@ def using_multiindex(A, columns):
     df = pd.DataFrame({'A': A.flatten()}, index=index).reset_index()
     return df
 
+def reshape_fmri(fmri):
+    n_samples, n_x, n_y = fmri.shape
+    return fmri.reshape((n_samples,n_x*n_y))
+
 def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
@@ -215,6 +219,7 @@ condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
 cv = KFold(n_splits = 4)
 #from sklearn.ensemble import RandomForestClassifier
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
+model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
 tfmri_masked = []
 score_mask = []
 
@@ -283,7 +288,12 @@ for i in range(0, x_inner_train.shape[0]):
     print(i)
     print(tf_train_masked[i].shape)
     print(time.time() - start_time)
-model.fit(tf_train_masked, y_inner_train)
+
+model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
+
+start_time = time.time()
+model1.fit(X, y_inner_train)
+print(time.time() - start_time)
 
 tf_test_masked = []
 for i in range(0, x_inner_test.shape[0]):
@@ -295,8 +305,10 @@ for i in range(0, x_inner_test.shape[0]):
         fmri_img = index_img(re, condition_mask)
     tf_test_masked.append(new_masker.fit_transform(fmri_img))
     print(i)
-    print(tf_train_masked[i].shape)
+    print(tf_test_masked[i].shape)
     print(time.time() - start_time)
-y_inner_pred = model.predict(tf_test_masked)
-
+    
+start_time = time.time()
+y_inner1_pred = model1.predict(Y)
+print(time.time() - start_time)
 
