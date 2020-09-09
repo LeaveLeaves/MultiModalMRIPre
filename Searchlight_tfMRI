@@ -281,8 +281,9 @@ for i in range(0, x_inner_train.shape[0]):
         fmri_img = index_img(re, condition_mask1)
     else:
         fmri_img = index_img(re, condition_mask)
-    tf_train_masked.append(new_masker.fit_transform(re))
+    tf_train_masked.append(new_masker.fit_transform(fmri_img))
     print(i)
+    print(tf_train_masked[i].shape)
     print(time.time() - start_time)
 model.fit(tf_train_masked, y_inner_train)
 
@@ -294,8 +295,9 @@ for i in range(0, x_inner_test.shape[0]):
         fmri_img = index_img(re, condition_mask1)
     else:
         fmri_img = index_img(re, condition_mask)
-    tf_test_masked.append(new_masker.fit_transform(re))
+    tf_test_masked.append(new_masker.fit_transform(fmri_img))
     print(i)
+    print(tf_train_masked[i].shape)
     print(time.time() - start_time)
 y_inner_pred = model.predict(tf_test_masked)
 
