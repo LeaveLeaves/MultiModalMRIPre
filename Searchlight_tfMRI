@@ -268,7 +268,8 @@ for i in range(, x_test.shape[0]):
     print(time.time() - start_time)
 
 for i in range(0, x_inner_train.shape[0]):
-    nib.save(s, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9]))
+    nib.save(s[i], "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9]))
+    print(i)
 
 score_int = intersect_masks(s, threshold = 0.9)
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
