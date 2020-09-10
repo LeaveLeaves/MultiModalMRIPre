@@ -11,6 +11,8 @@ import nilearn as nil
 import nibabel as nib
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import LinearSVC
+from sklearn import metrics
+from nilearn.masking import intersect_masks
 import time
 
 class Searchlight_tfMRI:
@@ -159,7 +161,7 @@ j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 0
+h = 1
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -203,15 +205,6 @@ print(time.time() - start_time1)
 mask_inter_85 = intersect_masks(s, threshold = 0.85)
 
 #############################################################store
-filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
-outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-X = np.array(filename["file"])
-y = np.repeat([1, 0], 234).ravel()
-j = 0
-train, test = list(outer_cv.split(X, y))[j]
-x_train, x_test = X[train], X[test]
-y_train, y_test = y[train], y[test]
 
 mask_int = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMRI468_mask_inter.nii.gz")
 template = nib.load(filename['file'].loc[9])
@@ -274,7 +267,12 @@ for i in range(0, x_inner_train.shape[0]):
     nib.save(s[i], "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9]))
     print(i)
 
-score_int = intersect_masks(s, threshold = 0.9)
+score_map = []
+for i in range(0, x_inner_train.shape[0]):
+    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9])))
+    print(i)
+
+score_int = intersect_masks(score_map, threshold = 0)
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
 tf_train_masked = []
 for i in range(0, x_inner_train.shape[0]):
@@ -311,4 +309,10 @@ for i in range(0, x_inner_test.shape[0]):
 start_time = time.time()
 y_inner1_pred = model1.predict(Y)
 print(time.time() - start_time)
+
+metrics.accuracy_score(y_inner_test, y_inner_pred)
+metrics.f1_score(y_inner_test, y_inner_pred)
+
+metrics.accuracy_score(y_inner_test, y_inner1_pred)
+metrics.f1_score(y_inner_test, y_inner1_pred)
 
