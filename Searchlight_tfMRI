@@ -316,3 +316,4 @@ metrics.f1_score(y_inner_test, y_inner_pred)
 metrics.accuracy_score(y_inner_test, y_inner1_pred)
 metrics.f1_score(y_inner_test, y_inner1_pred)
 
+plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map02.png')
