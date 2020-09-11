@@ -295,6 +295,10 @@ start_time = time.time()
 model.fit(X, y_inner_train)
 print(time.time() - start_time)
 
+start_time = time.time()
+model1.fit(X, y_inner_train)
+print(time.time() - start_time)
+
 tf_test_masked = []
 for i in range(0, x_inner_test.shape[0]):
     start_time = time.time()
@@ -309,6 +313,10 @@ for i in range(0, x_inner_test.shape[0]):
     print(time.time() - start_time)
 
 Y = reshape_fmri(np.array(tf_test_masked))
+
+start_time = time.time()
+y_inner_pred = model.predict(Y)
+print(time.time() - start_time)
 
 start_time = time.time()
 y_inner1_pred = model1.predict(Y)
