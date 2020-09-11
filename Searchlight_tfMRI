@@ -162,7 +162,7 @@ j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 4
+h = 0
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -290,24 +290,26 @@ for i in range(0, x_inner_train.shape[0]):
     print(time.time() - start_time)
 
 def tf(i):  
-    #start_time = time.time()
+    start_time = time.time()
     re = resample_to_img(x_inner_train[i], template)
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
     else:
         fmri_img = index_img(re, condition_mask)
-    tf_train_masked.append(new_masker.fit_transform(fmri_img))
+    tf_new_masked = new_masker.fit_transform(fmri_img)
+    tf_train_masked.append(tf_new_masked)
     print(i)
-    print(tf_train_masked[i].shape)
-    #print(time.time() - start_time)
+    print(tf_new_masked.shape)
+    print(time.time() - start_time)
 
 tf_train_masked = []
+
 Parallel(n_jobs = 9, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        #for i in range(234, x_inner_train.shape[0])
-        for i in range(0, 150)
+        #for i in range(0, 149)
+        for i in range(149, x_inner_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
@@ -315,7 +317,7 @@ model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
 X = reshape_fmri(np.array(tf_train_masked))
 
 start_time = time.time()
-model.fit(X1, y_inner_train)
+model.fit(X, y_inner_train)
 print(time.time() - start_time)
 
 start_time = time.time()
