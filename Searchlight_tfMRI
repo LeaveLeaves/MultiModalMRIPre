@@ -288,9 +288,11 @@ for i in range(0, x_inner_train.shape[0]):
     print(time.time() - start_time)
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
+model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
+X = reshape_fmri(np.array(tf_train_masked))
 
 start_time = time.time()
-model1.fit(X, y_inner_train)
+model.fit(X, y_inner_train)
 print(time.time() - start_time)
 
 tf_test_masked = []
@@ -305,7 +307,9 @@ for i in range(0, x_inner_test.shape[0]):
     print(i)
     print(tf_test_masked[i].shape)
     print(time.time() - start_time)
-    
+
+Y = reshape_fmri(np.array(tf_test_masked))
+
 start_time = time.time()
 y_inner1_pred = model1.predict(Y)
 print(time.time() - start_time)
@@ -316,4 +320,4 @@ metrics.f1_score(y_inner_test, y_inner_pred)
 metrics.accuracy_score(y_inner_test, y_inner1_pred)
 metrics.f1_score(y_inner_test, y_inner1_pred)
 
-plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map02.png')
+plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map01.png')
