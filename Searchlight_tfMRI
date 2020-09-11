@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from nilearn import datasets
 from nilearn.image import new_img_like, load_img, get_data
 from nilearn.image import resample_to_img
 from sklearn.model_selection import KFold
@@ -14,6 +13,7 @@ from sklearn.svm import LinearSVC
 from sklearn import metrics
 from nilearn.masking import intersect_masks
 from joblib import Parallel, delayed
+from sklearn.preprocessing import StandardScaler
 import time
 
 class Searchlight_tfMRI:
@@ -316,8 +316,13 @@ model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
 X = reshape_fmri(np.array(tf_train_masked))
 
+scaler = StandardScaler()
+scaler.fit(X)
+print(scaler.mean_)
+X1 = scaler.transform(X)
+
 start_time = time.time()
-model.fit(X, y_inner_train)
+model.fit(X1, y_inner_train)
 print(time.time() - start_time)
 
 start_time = time.time()
@@ -338,9 +343,10 @@ for i in range(0, x_inner_test.shape[0]):
     print(time.time() - start_time)
 
 Y = reshape_fmri(np.array(tf_test_masked))
+Y1 = scaler.transform(Y)
 
 start_time = time.time()
-y_inner_pred = model.predict(Y)
+y_inner_pred = model.predict(Y1)
 print(time.time() - start_time)
 
 start_time = time.time()
