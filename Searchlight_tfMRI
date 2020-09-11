@@ -13,6 +13,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import LinearSVC
 from sklearn import metrics
 from nilearn.masking import intersect_masks
+from joblib import Parallel, delayed
 import time
 
 class Searchlight_tfMRI:
@@ -275,6 +276,7 @@ for i in range(0, x_inner_train.shape[0]):
 score_int = intersect_masks(score_map, threshold = 0)
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
 tf_train_masked = []
+
 for i in range(0, x_inner_train.shape[0]):
     start_time = time.time()
     re = resample_to_img(x_inner_train[i], template)
@@ -286,6 +288,27 @@ for i in range(0, x_inner_train.shape[0]):
     print(i)
     print(tf_train_masked[i].shape)
     print(time.time() - start_time)
+
+def tf(i):  
+    #start_time = time.time()
+    re = resample_to_img(x_inner_train[i], template)
+    if (re.shape[3] == 366):
+        fmri_img = index_img(re, condition_mask1)
+    else:
+        fmri_img = index_img(re, condition_mask)
+    tf_train_masked.append(new_masker.fit_transform(fmri_img))
+    print(i)
+    print(tf_train_masked[i].shape)
+    #print(time.time() - start_time)
+
+tf_train_masked = []
+Parallel(n_jobs = 9, verbose = 0, require='sharedmem')(
+        delayed(tf)(
+            i,
+        )
+        #for i in range(234, x_inner_train.shape[0])
+        for i in range(0, 150)
+    )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
@@ -329,12 +352,3 @@ metrics.accuracy_score(y_inner_test, y_inner1_pred)
 metrics.f1_score(y_inner_test, y_inner1_pred)
 
 plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map04.png')
-
-    
-tfmri_masked = []
-Parallel(n_jobs = 10, verbose = 0, require='sharedmem')(
-        delayed(tfMRI)(
-            i,
-        )
-        for i in range(234, filename.shape[0])
-    )
