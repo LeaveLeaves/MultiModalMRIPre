@@ -333,8 +333,8 @@ Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tfoutter)(
             i,
         )
-        for i in range(0, 187)
-        #for i in range(187, x_train.shape[0])
+        #for i in range(0, 187)
+        for i in range(187, x_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
@@ -393,7 +393,7 @@ Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tfouttertest)(
             i,
         )
-        #for i in range(0, 37)
+        #for i in range(0, 47)
         for i in range(37, x_test.shape[0])
     )
     
