@@ -271,6 +271,11 @@ score_map = []
 for i in range(0, x_inner_train.shape[0]):
     score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_inner_train[i][2:9])))
     print(i)
+    
+score_map = []
+for i in range(0, x_train.shape[0]):
+    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_train[i][2:9])))
+    print(i)    
 
 score_int = intersect_masks(score_map, threshold = 0)
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
@@ -301,6 +306,19 @@ def tf(i):
     print(tf_new_masked.shape)
     print(time.time() - start_time)
 
+def tfoutter(i):  
+    start_time = time.time()
+    re = resample_to_img(x_train[i], template)
+    if (re.shape[3] == 366):
+        fmri_img = index_img(re, condition_mask1)
+    else:
+        fmri_img = index_img(re, condition_mask)
+    tf_new_masked = new_masker.fit_transform(fmri_img)
+    tf_train_masked.append(tf_new_masked)
+    print(i)
+    print(tf_new_masked.shape)
+    print(time.time() - start_time)
+
 tf_train_masked = []
 
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
@@ -309,6 +327,14 @@ Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         )
         #for i in range(0, 150)
         for i in range(150, x_inner_train.shape[0])
+    )
+
+Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
+        delayed(tfoutter)(
+            i,
+        )
+        for i in range(0, 187)
+        #for i in range(187, x_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
@@ -340,6 +366,19 @@ def tftest(i):
     print(i)
     print(tf_new_masked.shape)
     print(time.time() - start_time)
+    
+def tfouttertest(i):  
+    start_time = time.time()
+    re = resample_to_img(x_test[i], template)
+    if (re.shape[3] == 366):
+        fmri_img = index_img(re, condition_mask1)
+    else:
+        fmri_img = index_img(re, condition_mask)
+    tf_new_masked = new_masker.fit_transform(fmri_img)
+    tf_test_masked.append(tf_new_masked)
+    print(i)
+    print(tf_new_masked.shape)
+    print(time.time() - start_time)
 
 tf_test_masked = []
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
@@ -347,7 +386,15 @@ Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
             i,
         )
         #for i in range(0, 37)
-        for i in range(38, x_inner_test.shape[0])
+        for i in range(37, x_inner_test.shape[0])
+    )
+    
+Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
+        delayed(tfouttertest)(
+            i,
+        )
+        #for i in range(0, 37)
+        for i in range(37, x_test.shape[0])
     )
     
 for i in range(0, x_inner_test.shape[0]):
