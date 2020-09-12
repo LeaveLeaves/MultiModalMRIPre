@@ -162,7 +162,7 @@ j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 0
+h = 1
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -237,7 +237,6 @@ dff.reset_index(drop = True, inplace = True)
 score_binary = np.zeros_like(score)
 for k in range(dff.shape[0]):
     score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
-
 nib.save(new_img_like(mask_fmri, score_binary), "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_test[i][2:9]))
 print(sum(sum(sum(score_binary))))
 print(i)
@@ -308,8 +307,8 @@ Parallel(n_jobs = 9, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        #for i in range(0, 149)
-        for i in range(149, x_inner_train.shape[0])
+        for i in range(0, 149)
+        #for i in range(149, x_inner_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
@@ -326,10 +325,31 @@ model.fit(X1, y_inner_train)
 print(time.time() - start_time)
 
 start_time = time.time()
-model1.fit(X, y_inner_train)
+model1.fit(X1, y_inner_train)
 print(time.time() - start_time)
 
+def tftest(i):  
+    start_time = time.time()
+    re = resample_to_img(x_inner_test[i], template)
+    if (re.shape[3] == 366):
+        fmri_img = index_img(re, condition_mask1)
+    else:
+        fmri_img = index_img(re, condition_mask)
+    tf_new_masked = new_masker.fit_transform(fmri_img)
+    tf_test_masked.append(tf_new_masked)
+    print(i)
+    print(tf_new_masked.shape)
+    print(time.time() - start_time)
+
 tf_test_masked = []
+Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
+        delayed(tftest)(
+            i,
+        )
+        #for i in range(0, 38)
+        for i in range(38, x_inner_test.shape[0])
+    )
+    
 for i in range(0, x_inner_test.shape[0]):
     start_time = time.time()
     re = resample_to_img(x_inner_test[i], template)
@@ -350,7 +370,7 @@ y_inner_pred = model.predict(Y1)
 print(time.time() - start_time)
 
 start_time = time.time()
-y_inner1_pred = model1.predict(Y)
+y_inner1_pred = model1.predict(Y1)
 print(time.time() - start_time)
 
 metrics.accuracy_score(y_inner_test, y_inner_pred)
