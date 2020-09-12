@@ -162,7 +162,7 @@ j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 1
+h = 2
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -303,12 +303,12 @@ def tf(i):
 
 tf_train_masked = []
 
-Parallel(n_jobs = 9, verbose = 0, require='sharedmem')(
+Parallel(n_jobs = 10, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        for i in range(0, 149)
-        #for i in range(149, x_inner_train.shape[0])
+        #for i in range(0, 150)
+        for i in range(150, x_inner_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
