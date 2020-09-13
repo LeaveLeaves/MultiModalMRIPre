@@ -158,11 +158,11 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_H
 y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-j = 0
+j = 1
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 3
+h = 4
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -319,16 +319,19 @@ def tfoutter(i):
     print(tf_new_masked.shape)
     print(time.time() - start_time)
 
-tf_train_masked = []
+np.unique(y_inner_train, return_counts = True)
 
+tf_train_masked = []
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        #for i in range(0, 150)
+        #for i in range(0,150)
         for i in range(150, x_inner_train.shape[0])
     )
 
+np.unique(y_train, return_counts = True)
+tf_train_masked = []
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tfoutter)(
             i,
@@ -347,6 +350,10 @@ print(scaler.mean_)
 X1 = scaler.transform(X)
 
 start_time = time.time()
+model.fit(X1, y_inner_train)
+print(time.time() - start_time)
+
+start_time = time.time()
 model1.fit(X1, y_inner_train)
 print(time.time() - start_time)
 
@@ -357,7 +364,6 @@ print(time.time() - start_time)
 start_time = time.time()
 model1.fit(X1, y_train)
 print(time.time() - start_time)
-
 
 def tftest(i):  
     start_time = time.time()
@@ -386,6 +392,8 @@ def tfouttertest(i):
     print(time.time() - start_time)
 
 tf_test_masked = []
+
+np.unique(y_inner_test, return_counts = True)
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tftest)(
             i,
@@ -394,6 +402,7 @@ Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         for i in range(37, x_inner_test.shape[0])
     )
     
+np.unique(y_test, return_counts = True)
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tfouttertest)(
             i,
@@ -430,7 +439,7 @@ y_pred = model.predict(Y1)
 print(time.time() - start_time)
 
 start_time = time.time()
-y_pred = model1.predict(Y1)
+y_pred1= model1.predict(Y1)
 print(time.time() - start_time)
 
 metrics.accuracy_score(y_inner_test, y_inner_pred)
@@ -440,6 +449,9 @@ metrics.accuracy_score(y_inner_test, y_inner1_pred)
 metrics.f1_score(y_inner_test, y_inner1_pred)
 
 metrics.accuracy_score(y_test, y_pred)
+metrics.f1_score(y_test, y_pred)
+
+metrics.accuracy_score(y_test, y_pred1)
 metrics.f1_score(y_test, y_pred)
 
 plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map04.png')
