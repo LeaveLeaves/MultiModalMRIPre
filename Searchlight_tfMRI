@@ -391,9 +391,9 @@ def tfouttertest(i):
     print(tf_new_masked.shape)
     print(time.time() - start_time)
 
-tf_test_masked = []
-
 np.unique(y_inner_test, return_counts = True)
+
+tf_test_masked = []
 Parallel(n_jobs = 15, verbose = 0, require='sharedmem')(
         delayed(tftest)(
             i,
