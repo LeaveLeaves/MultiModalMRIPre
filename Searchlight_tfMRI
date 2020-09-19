@@ -456,7 +456,7 @@ y_inner_pred = clf.predict(Y)
 print(time.time() - start_time)
 
 start_time = time.time()
-y_inner1_pred = clf1.predict(Y)
+y_pred = clf1.predict(Y)
 print(time.time() - start_time)
 
 Y1 = scaler.transform(Y)
