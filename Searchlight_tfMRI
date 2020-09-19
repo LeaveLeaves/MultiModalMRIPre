@@ -122,10 +122,7 @@ def using_multiindex(A, columns):
     df = pd.DataFrame({'A': A.flatten()}, index=index).reset_index()
     return df
 
-def reshape_fmri(fmri):
-    n_samples, n_x, n_y = fmri.shape
-    return fmri.reshape((n_samples,n_x*n_y))
-
+c
 def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
@@ -163,7 +160,7 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_H
 y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-j = 1
+j = 4
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
@@ -341,8 +338,8 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
         delayed(tfoutter)(
             i,
         )
-        #for i in range(0, 187)
-        for i in range(187, x_train.shape[0])
+        for i in range(0, 188)
+        #for i in range(187, x_train.shape[0])
     )
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
