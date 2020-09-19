@@ -500,7 +500,7 @@ metrics.precision_score(y_test, y_pred, average='binary')
 tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
 s = tn / (tn+fp)
 print(s)
-y_score = clf.predict_proba(x_test)[:,1]
+y_score = clf1.predict_proba(Y)[:,1]
 pre, re, thresholds = precision_recall_curve(y_test, y_score)
 auc(re, pre)
 fpr, tpr, thresholds = roc_curve(y_test, y_score, drop_intermediate = False)
