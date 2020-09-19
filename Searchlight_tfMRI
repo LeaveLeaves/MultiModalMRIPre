@@ -16,6 +16,7 @@ from joblib import Parallel, delayed
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 import joblib
+from sklearn.svm import SVC
 import time
 
 class Searchlight_tfMRI:
@@ -160,7 +161,7 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_H
 y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-j = 2
+j = 1
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
@@ -328,8 +329,8 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        #for i in range(0,151)
-        for i in range(151, x_inner_train.shape[0])
+        for i in range(0,151)
+        #for i in range(151, x_inner_train.shape[0])
     )
 
 np.unique(y_train, return_counts = True)
@@ -344,6 +345,7 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
+model1 = SVC(kernel = 'linear', probability = True, C = 1)
 X = reshape_fmri(np.array(tf_train_masked))
 
 clf = make_pipeline(StandardScaler(), model)
