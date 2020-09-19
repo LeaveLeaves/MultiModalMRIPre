@@ -122,7 +122,10 @@ def using_multiindex(A, columns):
     df = pd.DataFrame({'A': A.flatten()}, index=index).reset_index()
     return df
 
-c
+def reshape_fmri(fmri):
+    n_samples, n_x, n_y = fmri.shape
+    return fmri.reshape((n_samples,n_x*n_y))
+
 def tfMRI_searchlight_raw(n_jobs, n_splits, tfmri_filename, mask_int, C = 0.1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
