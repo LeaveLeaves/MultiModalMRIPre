@@ -17,6 +17,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 import joblib
 from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
+from sklearn.metrics import confusion_matrix
 import time
 
 class Searchlight_tfMRI:
@@ -490,3 +492,17 @@ metrics.accuracy_score(y_test, y_pred1)
 metrics.f1_score(y_test, y_pred)
 
 plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map04.png')
+
+metrics.accuracy_score(y_test, y_pred)
+metrics.f1_score(y_test, y_pred)
+metrics.recall_score(y_test, y_pred, average='binary')
+metrics.precision_score(y_test, y_pred, average='binary')
+tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+s = tn / (tn+fp)
+print(s)
+y_score = clf.predict_proba(x_test)[:,1]
+pre, re, thresholds = precision_recall_curve(y_test, y_score)
+auc(re, pre)
+fpr, tpr, thresholds = roc_curve(y_test, y_score, drop_intermediate = False)
+auc(fpr, tpr)
+
