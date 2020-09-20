@@ -218,7 +218,7 @@ condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
 cv = KFold(n_splits = 4)
 #from sklearn.ensemble import RandomForestClassifier
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
-model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
+model1 =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 tfmri_masked = []
 score_mask = []
 
@@ -347,7 +347,7 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
-model1 = SVC(kernel = 'linear', probability = True, C = 1)
+model1 = SVC(kernel = 'linear', probability = True, C = 0.1)
 X = reshape_fmri(np.array(tf_train_masked))
 
 clf = make_pipeline(StandardScaler(), model)
@@ -492,6 +492,10 @@ metrics.accuracy_score(y_test, y_pred1)
 metrics.f1_score(y_test, y_pred)
 
 plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map04.png')
+
+start_time = time.time()
+y_pred = clf1.predict(Y)
+print(time.time() - start_time)
 
 metrics.accuracy_score(y_test, y_pred)
 metrics.f1_score(y_test, y_pred)
