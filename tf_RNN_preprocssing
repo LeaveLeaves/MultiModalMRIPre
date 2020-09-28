@@ -28,4 +28,17 @@ for i in range(0, filename.shape[0]):
   re = resample_to_img(mri, template)
   nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (filename['file'].loc[i][2:9]))
   
-  
+nifti_masker = NiftiMasker(mask_strategy='template', memory="nilearn_cache",  memory_level=1)
+mni = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (filename['file'].loc[i][2:9]))
+mask_fmri = nifti_masker.fit(mni).mask_img_
+
+canica = CanICA(n_components = 20,
+                memory = "nilearn_cache", memory_level=2,
+                n_jobs = 10,
+                verbose=10,
+                mask = mask_fmri)
+ca = []
+for i in range(0, 10):
+  mni = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (filename['file'].loc[i][2:9]))
+  ca.append(mni)
+  print(i)
