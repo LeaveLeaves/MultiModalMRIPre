@@ -163,11 +163,11 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_H
 y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-j = 4
+j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-h = 4
+h = 2
 inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
 x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
 y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
@@ -213,7 +213,9 @@ mask_inter_85 = intersect_masks(s, threshold = 0.85)
 #############################################################store
 mask_int = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMRI468_mask_inter.nii.gz")
 template = nib.load(filename['file'].loc[9])
-condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
+condition_mask, y0, condition_mask1, y1 = label_condition('face', 'rest')
+condition_mask1[227:261] = False
+
 cv = KFold(n_splits = 4)
 #from sklearn.ensemble import RandomForestClassifier
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
@@ -304,7 +306,19 @@ for i in range(0, x_train.shape[0]):
     score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_05score/%s_score.nii.gz" % (x_train[i][2:9])))
     print(i)    
 
-score_int = intersect_masks(score_map, threshold = 0)
+score_map = []
+for i in range(0, x_inner_train.shape[0]):
+    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_inner_train[i][2:9])))
+    print(i)
+    
+score_map = []
+for i in range(0, x_train.shape[0]):
+    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_train[i][2:9])))
+    print(i)    
+
+score_int = intersect_masks(score_map, threshold = 0.6)
+np.unique(score_int.get_data(), return_counts = True)
+#plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI08_mask4')
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
 tf_train_masked = []
 
@@ -353,8 +367,8 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        for i in range(0,151)
-        #for i in range(151, x_inner_train.shape[0])
+        #for i in range(0,150)
+        for i in range(150, x_inner_train.shape[0])
     )
 
 np.unique(y_train, return_counts = True)
@@ -369,7 +383,7 @@ Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
 
 model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
 model1 =  LinearSVC(dual = False, max_iter = 10000, C = 1)
-model1 = SVC(kernel = 'linear', probability = True, C = 0.1)
+model = SVC(kernel = 'linear', probability = True, C = 0.1)
 X = reshape_fmri(np.array(tf_train_masked))
 
 clf = make_pipeline(StandardScaler(), model)
@@ -389,7 +403,7 @@ print(time.time() - start_time)
 
 clf1 = make_pipeline(StandardScaler(), model1)
 start_time = time.time()
-clf1.fit(X, y_train)
+clf1.fit(X, y_inner_train)
 print(time.time() - start_time)
 
 scaler = StandardScaler()
