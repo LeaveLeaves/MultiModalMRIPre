@@ -314,12 +314,17 @@ for i in range(0, x_inner_train.shape[0]):
 score_map = []
 for i in range(0, x_train.shape[0]):
     score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_train[i][2:9])))
-    print(i)    
+    #print(i)    
 
-score_int = intersect_masks(score_map, threshold = 0.65)
-np.unique(score_int.get_data(), return_counts = True)
-#plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI08_mask4')
+perc = 675
+def plot_mask(perc):
+    score_int = intersect_masks(score_map, threshold = perc*0.001)
+    np.unique(score_int.get_data(), return_counts = True)
+    plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI%s_mask0'perc))
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
+
+#plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map_65%_00.png')
+
 tf_train_masked = []
 
 for i in range(0, x_inner_train.shape[0]):
@@ -525,8 +530,6 @@ metrics.f1_score(y_test, y_pred)
 
 metrics.accuracy_score(y_test, y_pred1)
 metrics.f1_score(y_test, y_pred)
-
-plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map04.png')
 
 start_time = time.time()
 y_pred = clf1.predict(Y)
