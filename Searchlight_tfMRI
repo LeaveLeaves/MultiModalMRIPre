@@ -163,7 +163,7 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_H
 y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-j = 0
+j = 4
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
@@ -316,11 +316,20 @@ for i in range(0, x_train.shape[0]):
     score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_train[i][2:9])))
     #print(i)    
 
-perc = 675
+percs = [650, 675, 700]
+
 def plot_mask(perc):
     score_int = intersect_masks(score_map, threshold = perc*0.001)
-    np.unique(score_int.get_data(), return_counts = True)
-    plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI%s_mask0'perc))
+    print(np.unique(score_int.get_data(), return_counts = True))
+    plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI%s_mask4' % (perc))
+
+for perc in percs:
+    plot_mask(perc)
+    print(perc)
+
+score_int = intersect_masks(score_map, threshold = perc*0.001)
+np.unique(score_int.get_data(), return_counts = True)
+plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI%s_mask0' % (perc))
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
 
 #plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map_65%_00.png')
