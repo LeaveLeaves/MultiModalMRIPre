@@ -237,6 +237,9 @@ for i in range(2, filename.shape[0]):
         fmri_img = index_img(mni, condition_mask)
         searchlight.fit(fmri_img, y0)
     score = searchlight.scores_
+    np.save("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.nii.gz" % (filename['file'].loc[i][2:9]), score)
+    print(time.time() - start_time)
+
     df = using_multiindex(score, list('XYZ'))
     dff = df.loc[df['A'] > 0.5]
     dff.reset_index(drop = True, inplace = True)
