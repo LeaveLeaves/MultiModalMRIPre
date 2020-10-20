@@ -227,7 +227,7 @@ mni = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resamp
 mask_fmri = nifti_masker.fit(mni).mask_img_
 searchlight = nilearn.decoding.SearchLight(mask_img = mask_fmri, n_jobs = 10, verbose=1, cv=cv, estimator = model)
 
-for i in range(2, filename.shape[0]):
+for i in range(393, filename.shape[0]):
     start_time = time.time()
     mni = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (filename['file'].loc[i][2:9]))
     if (mni.shape[3] == 366):
