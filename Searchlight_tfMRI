@@ -238,6 +238,8 @@ for i in range(393, filename.shape[0]):
         searchlight.fit(fmri_img, y0)
     score = searchlight.scores_
     np.save("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.nii.gz" % (filename['file'].loc[i][2:9]), score)
+    print(i)
+    print(score.shape)
     print(time.time() - start_time)
 
     df = using_multiindex(score, list('XYZ'))
