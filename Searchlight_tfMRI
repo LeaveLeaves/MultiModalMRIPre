@@ -237,7 +237,7 @@ for i in range(393, filename.shape[0]):
         fmri_img = index_img(mni, condition_mask)
         searchlight.fit(fmri_img, y0)
     score = searchlight.scores_
-    np.save("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.nii.gz" % (filename['file'].loc[i][2:9]), score)
+    np.save("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (filename['file'].loc[i][2:9]), score)
     print(i)
     print(score.shape)
     print(time.time() - start_time)
@@ -253,6 +253,22 @@ for i in range(393, filename.shape[0]):
     print(score_binary.shape)
     nib.save(new_img_like(mask_fmri, score_binary), "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (filename['file'].loc[i][2:9]))
     print(time.time() - start_time)
+
+score_map = []
+for i in range(0, filename.shape[0]):
+    score = np.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (filename['file'].loc[i][2:9]))
+    df = using_multiindex(score, list('XYZ'))
+    dff = df.loc[df['A'] > 0.5]
+    dff.reset_index(drop = True, inplace = True)
+    score_binary = np.zeros_like(score)
+    for k in range(dff.shape[0]):
+        score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
+    score_map.append(new_img_like(mask_fmri, score_binary))
+    print(np.unique(score_binary, return_counts = True))
+    print(score_binary.shape)
+    print(len(score_map))
+    
+    
 
 i = 5
 start_time = time.time()
@@ -334,7 +350,7 @@ for perc in percs:
 
 score_int = intersect_masks(score_map, threshold = perc*0.001)
 np.unique(score_int.get_data(), return_counts = True)
-plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_MNI%s_mask0' % (perc))
+plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_SF05_MNI_union.png')
 new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
 
 #plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/score_map_65%_00.png')
