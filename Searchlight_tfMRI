@@ -114,7 +114,7 @@ def label_condition(con1,con2):
     y1.reset_index(drop = True, inplace = True)
     return condition_mask, y, condition_mask1, y1
     
-condition_mask, y0, condition_mask1, y1 = label_condition('face', 'rest')
+condition_mask, y0, condition_mask1, y1 = label_condition('shap', 'face')
 
 def using_multiindex(A, columns):
     shape = A.shape
@@ -371,7 +371,7 @@ for i in range(0, x_inner_train.shape[0]):
 
 def tf(i):  
     start_time = time.time()
-    re = resample_to_img(x_inner_train[i], template)
+    re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (x_inner_train[i][2:9]))
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
     else:
@@ -384,7 +384,7 @@ def tf(i):
 
 def tfoutter(i):  
     start_time = time.time()
-    re = resample_to_img(x_train[i], template)
+    re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (x_train[i][2:9]))
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
     else:
@@ -397,12 +397,12 @@ def tfoutter(i):
 
 np.unique(y_inner_train, return_counts = True)
 tf_train_masked = []
-Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
+Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        #for i in range(0, 149)
-        for i in range(149, x_inner_train.shape[0])
+        for i in range(0, 150)
+        #for i in range(150, x_inner_train.shape[0])
     )
 
 np.unique(y_train, return_counts = True)
@@ -464,7 +464,7 @@ print(time.time() - start_time)
 
 def tftest(i):  
     start_time = time.time()
-    re = resample_to_img(x_inner_test[i], template)
+    re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (x_inner_test[i][2:9]))
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
     else:
@@ -477,7 +477,7 @@ def tftest(i):
     
 def tfouttertest(i):  
     start_time = time.time()
-    re = resample_to_img(x_test[i], template)
+    re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (x_test[i][2:9]))
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
     else:
