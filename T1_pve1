@@ -1,0 +1,33 @@
+import numpy as np
+import pandas as pd
+from nilearn.image import new_img_like, load_img, get_data
+from nilearn.image import resample_to_img
+from sklearn.model_selection import KFold
+from nilearn.image import index_img
+import nilearn.decoding
+from nilearn.input_data import NiftiMasker
+import nilearn as nil
+import nibabel as nib
+from sklearn.model_selection import StratifiedKFold
+from sklearn.svm import LinearSVC
+from sklearn import metrics
+from nilearn.masking import intersect_masks
+from joblib import Parallel, delayed
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+import joblib
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
+from sklearn.metrics import confusion_matrix
+from nilearn import plotting
+import time
+
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_agesex_Matched_Noduplicate.csv', dtype = str)
+df = using_multiindex(df2, list('XYZ'))
+dff = df.loc[df['A'] > 0.5]
+dff.reset_index(drop = True, inplace = True)
+df_binary = np.zeros_like(df2)
+for k in range(dff.shape[0]):
+    df_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
+    
+plotting.plot_img(pve1_05, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/pve1_05_1002763.png')
