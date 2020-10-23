@@ -401,13 +401,13 @@ Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tf)(
             i,
         )
-        for i in range(0, 150)
-        #for i in range(150, x_inner_train.shape[0])
+        #for i in range(0, 150)
+        for i in range(150, x_inner_train.shape[0])
     )
 
 np.unique(y_train, return_counts = True)
 tf_train_masked = []
-Parallel(n_jobs = 20, verbose = 0, require='sharedmem')(
+Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tfoutter)(
             i,
         )
