@@ -619,54 +619,58 @@ j = 0
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
 y_train, y_test = y[train], y[test]
-for h in range(5):
-
-inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
-x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
-y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
-score_map = []
-for i in range(0, x_inner_train.shape[0]):
-    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_inner_train[i][2:9])))
-    print("Score mask reading process{0}%".format(round((i+1)*100/x_inner_train.shape[0])), end="\r")
-score_int = intersect_masks(score_map, threshold = 0.675)
-new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
-condition_mask = np.repeat(True, 332).ravel()
-condition_mask1 = np.repeat(True, 366).ravel()
-condition_mask1[332:] = False
-tf_train_masked = []
-tf_train_label = []
-Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
+a = []
+f11 = []
+for h in range(3, 5):
+    inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
+    x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
+    y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
+    score_map = []
+    for i in range(0, x_inner_train.shape[0]):
+        score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (x_inner_train[i][2:9])))
+        print("Score mask reading process{0}%".format(round((i+1)*100/x_inner_train.shape[0])), end="\r")
+    score_int = intersect_masks(score_map, threshold = 0.675)
+    new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
+    condition_mask = np.repeat(True, 332).ravel()
+    condition_mask1 = np.repeat(True, 366).ravel()
+    condition_mask1[332:] = False
+    tf_train_masked = []
+    tf_train_label = []
+    Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tfMRI_mask_train)(
             i, x_inner_train, y_inner_train, condition_mask1, condition_mask,
         )
         for i in range(0, x_inner_train.shape[0])
     )
-tf_test_masked = []
-tf_test_label = []
-Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
+    tf_test_masked = []
+    tf_test_label = []
+    Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tfMRI_mask_test)(
             i, x_inner_test, y_inner_test, condition_mask1, condition_mask,
         )
         for i in range(0, x_inner_test.shape[0])
     )
-model =  RandomForestClassifier()
-X = reshape_fmri(np.array(tf_train_masked))
-clf = make_pipeline(StandardScaler(), model)
-start_time = time.time()
-clf.fit(X, tf_train_label)
-print("Training time", time.time() - start_time)
-Y = reshape_fmri(np.array(tf_test_masked))
-start_time = time.time()
-y_inner_pred = clf.predict(Y)
-print("Testing time", time.time() - start_time)
-a1 = metrics.accuracy_score(tf_test_label, y_inner_pred)
-f11 = metrics.f1_score(tf_test_label, y_inner_pred)
+    #model =  RandomForestClassifier()
+    model =  LinearSVC(dual = False, max_iter = 10000, C = 0.1)
+    X = reshape_fmri(np.array(tf_train_masked))
+    clf = make_pipeline(StandardScaler(), model)
+    start_time = time.time()
+    clf.fit(X, tf_train_label)
+    print("Training time", time.time() - start_time)
+    Y = reshape_fmri(np.array(tf_test_masked))
+    start_time = time.time()
+    y_inner_pred = clf.predict(Y)
+    print("Testing time", time.time() - start_time)
+    a1 = metrics.accuracy_score(tf_test_label, y_inner_pred)
+    f11 = metrics.f1_score(tf_test_label, y_inner_pred)
+    a.append(a1)
+    f.append(f11)
 
-for i in range(len(tf_train_masked)):
+    for i in range(len(tf_train_masked)):
     if (tf_train_masked[i].shape != tf_train_masked[0].shape):
         print(i, "error")
-        
-Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
+
+    Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
         delayed(tfMRI_mask_train)(
             i, x_inner_train, y_inner_train, condition_mask1, condition_mask,
         )
