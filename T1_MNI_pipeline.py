@@ -44,8 +44,8 @@ class preprocess():
     #read in MRI data, match them to modality and phenotype information
     def read_data(self):
         #read in ND, HC file path
-        ND = pd.read_csv(self.ND_path, dtype = str, names = ['eid'], dtype = str)
-        HC = pd.read_csv(self.HC_path, dtype = str, names = ['eid'], dtype = str)
+        ND = pd.read_csv(self.ND_path, dtype = str, names = ['eid'])
+        HC = pd.read_csv(self.HC_path, dtype = str, names = ['eid'])
         #read in phenotype information
         df = pd.read_csv(self.pheno_path, dtype = str)
         #read in modal file path
