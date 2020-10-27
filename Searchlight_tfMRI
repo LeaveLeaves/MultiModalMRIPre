@@ -719,7 +719,7 @@ X = reshape_fmri(np.array(tf_train_masked))
 p = [10, 100, 1000]
 p = [1, 3, 5, 7]
 for i in range(len(p)):
-    model =  SVC(kernel = "rbf", C = 1, degree = p[i])
+    model =  SVC(kernel = "poly", C = 1, degree = p[i])
     print(p[i])
     clf = make_pipeline(StandardScaler(), model)
     start_time = time.time()
