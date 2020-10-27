@@ -20,6 +20,7 @@ import joblib
 from sklearn.svm import SVC
 from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
 from sklearn.metrics import confusion_matrix
+from nilearn.datasets import load_mni152_template
 import time
 
 class Searchlight_tfMRI:
