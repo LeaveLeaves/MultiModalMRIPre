@@ -1,1 +1,88 @@
-df = pd.read_csv("dr_stage1.txt",header = None,  sep = "\s+")
+import numpy as np
+import pandas as pd
+from nilearn.image import new_img_like, load_img, get_data
+from nilearn.image import resample_to_img
+from sklearn.model_selection import KFold
+from nilearn.image import index_img
+import nilearn.decoding
+from nilearn.input_data import NiftiMasker
+import nilearn as nil
+import nibabel as nib
+from sklearn.model_selection import StratifiedKFold
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import GridSearchCV
+from sklearn import metrics
+from nilearn.masking import intersect_masks
+from joblib import Parallel, delayed
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+import joblib
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
+from sklearn.metrics import confusion_matrix
+from nilearn.connectome import ConnectivityMeasure
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.linear_model import LogisticRegression
+import time
+
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_rfMRI_Matched.csv', dtype = str)
+ica = []
+label = []
+for i in range(0, filename.shape[0]):
+    start_time = time.time()
+    re = np.loadtxt(filename['file'].loc[i] + '/dr_stage1.txt', dtype = float)
+    ica.append(re)
+    label.append(filename['label'].loc[i])
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+
+ica = np.asarray(ica)
+
+y = np.array(label).ravel()
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 10)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 10)
+for j in range(5):
+  train, test = list(outer_cv.split(filename, y))[j]
+  x_train, x_test = ica[train], ica[test]
+  y_train, y_test = y[train], y[test]
+  for h in range(5):
+    inner_train, inner_test = list(inner_cv.split(x_train, y_train))[h]
+    x_inner_train, x_inner_test = x_train[inner_train], x_train[inner_test]
+    y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
+
+kinds = ['correlation', 'partial correlation', 'tangent']
+connectivity = ConnectivityMeasure(kind=kinds[0], vectorize=True)
+X = connectivity.fit_transform(x_inner_train)
+Y = connectivity.transform(x_inner_test)
+# fit the classifier
+classifier = LinearSVC().fit(X, y_inner_train)
+# make predictions for the left-out test subjects
+y_pred = classifier.predict(Y)
+metrics.accuracy_score(y_inner_test, y_pred)
+metrics.f1_score(y_inner_test, y_pred, pos_label = '1')
+
+model =  SVC(kernel = 'rbf')
+model = RandomForestClassifier()
+model = LogisticRegression()
+#model = CalibratedClassifierCV(base_estimator=LinearSVC()
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 6)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 5)
+a = []
+f = []
+for j in range(5):
+  train, test = list(outer_cv.split(filename, y))[j]
+  x_train, x_test = ica[train], ica[test]
+  y_train, y_test = y[train], y[test]
+  kinds = ['correlation', 'partial correlation', 'tangent']
+  connectivity = ConnectivityMeasure(kind=kinds[2], vectorize=True)
+  X = connectivity.fit_transform(x_train)
+  Y = connectivity.transform(x_test)
+  # fit the classifier
+  classifier = make_pipeline(StandardScaler(), model)
+  classifier.fit(X, y_train)
+  # make predictions for the left-out test subjects
+  y_pred = classifier.predict(Y)
+  a.append(metrics.accuracy_score(y_test, y_pred))
+  f.append(metrics.f1_score(y_test, y_pred, pos_label = '1'))
+
+print(np.mean(a))
+print(np.mean(f))
