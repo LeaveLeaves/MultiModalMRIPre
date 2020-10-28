@@ -23,13 +23,14 @@ from sklearn.metrics import confusion_matrix
 from nilearn.connectome import ConnectivityMeasure
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
+from nilearn.datasets import load_mni152_template
 import time
 
-filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_rfMRI_Matched.csv', dtype = str)
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched25.csv', dtype = str)
 ica = []
 label = []
 for i in range(0, filename.shape[0]):
-    start_time = time.time()
+    
     re = np.loadtxt(filename['file'].loc[i] + '/dr_stage1.txt', dtype = float)
     ica.append(re)
     label.append(filename['label'].loc[i])
@@ -60,10 +61,10 @@ y_pred = classifier.predict(Y)
 metrics.accuracy_score(y_inner_test, y_pred)
 metrics.f1_score(y_inner_test, y_pred, pos_label = '1')
 
-model =  SVC(kernel = 'rbf')
+model =  SVC(kernel = 'linear')
 model = RandomForestClassifier()
 model = LogisticRegression()
-#model = CalibratedClassifierCV(base_estimator=LinearSVC()
+#model = CalibratedClassifierCV(base_estimator=LinearSVC())
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 6)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 5)
 a = []
@@ -84,5 +85,34 @@ for j in range(5):
   a.append(metrics.accuracy_score(y_test, y_pred))
   f.append(metrics.f1_score(y_test, y_pred, pos_label = '1'))
 
-print(np.mean(a))
-print(np.mean(f))
+print(a)
+print(f)
+print("a = ", np.mean(a))
+print("f = ", np.mean(f))
+
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched.csv', dtype = str)
+ica = []
+label = []
+template = load_mni152_template()
+time_course = np.append([True]*490, [False]*33)
+
+for i in range(0, filename.shape[0]):
+start_time = time.time()
+if (re.shape[2] == 532):
+    fmri_img = index_img(filename['file'].loc[i], time_course)
+    re = resample_to_img(fmri_img, template)
+else:
+    re = resample_to_img(filename['file'].loc[i], template)
+
+nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/rfMNI_resample/%s_MNI.nii.gz" % (filename['eid'].loc[i]))
+print(time.time() - start_time)    
+    
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+    
+    re = np.loadtxt(filename['file'].loc[i] + '/dr_stage1.txt', dtype = float)
+    ica.append(re)
+    label.append(filename['label'].loc[i])
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+
+ica = np.asarray(ica)
+
