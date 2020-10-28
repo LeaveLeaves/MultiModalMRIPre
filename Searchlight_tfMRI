@@ -176,7 +176,7 @@ y_inner_train, y_inner_test = y_train[inner_train], y_train[inner_test]
 ##############################################################################################################################################
 
 mask_fmri = nifti_masker.fit(filename['file'].loc[9]).mask_img_
-template = nib.load(filename['file'].loc[9])
+template = load_mni152_template()
 def tfMRI_searchlight(n_jobs, n_splits, tfmri_filename, mask_int, C, template, y, y1, condition_mask, condition_mask1):
     cv = KFold(n_splits = n_splits)
     #from sklearn.ensemble import RandomForestClassifier
@@ -257,8 +257,8 @@ for i in range(393, filename.shape[0]):
     print(time.time() - start_time)
 
 score_map = []
-for i in range(0, x_inner_train.shape[0]):
-    score = np.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (x_inner_train[i][2:9]))
+for i in range(0, filename.shape[0]):
+    score = np.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (filename['file'].loc[i][2:9]))
     df = using_multiindex(score, list('XYZ'))
     dff = df.loc[df['A'] > 0.5]
     dff.reset_index(drop = True, inplace = True)
@@ -270,8 +270,30 @@ for i in range(0, x_inner_train.shape[0]):
     #print(np.unique(score_binary, return_counts = True))
     #print(score_binary.shape)
     #print(len(score_map))
+
+score_map = np.zeros(template.shape)
+for i in range(0, filename.shape[0]):
+    score = np.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (filename['file'].loc[i][2:9]))
+    df = using_multiindex(score, list('XYZ'))
+    dff = df.loc[df['A'] > 0.5]
+    dff.reset_index(drop = True, inplace = True)
+    score_binary = np.zeros_like(score)
+    for k in range(dff.shape[0]):
+        score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = dff['A'][k]
+    score_map = np.add(score_map, score_binary)
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
     
-    
+    score_map.append(new_img_like(template, score_binary))
+    print("Score mask reading process{0}%".format(round((i+1)*100/x_inner_train.shape[0])), end="\r")
+    #print(np.unique(score_binary, return_counts = True))
+    #print(score_binary.shape)
+    #print(len(score_map))
+
+searchlight_img = new_img_like(template, score_map)
+plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 7, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_map,png')    
+
+searchlight_img = new_img_like(template, StandardScaler().fit_transform(score_map))
+plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 1.5, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_mean,png')    
 
 i = 5
 start_time = time.time()
