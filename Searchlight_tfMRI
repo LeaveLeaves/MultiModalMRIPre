@@ -21,6 +21,8 @@ from sklearn.svm import SVC
 from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
 from sklearn.metrics import confusion_matrix
 from nilearn.datasets import load_mni152_template
+import warnings
+from nilearn.datasets import load_mni152_template
 import time
 
 class Searchlight_tfMRI:
@@ -163,8 +165,8 @@ m = tfMRI_searchlight_raw(n_jobs = 10, n_splits = 4, tfmri_filename = x_inner_tr
 ###############################################################################################################################################
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
 y = np.repeat([1, 0], 234).ravel()
-outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
-inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 6)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 6)
 j = 4
 train, test = list(outer_cv.split(filename, y))[j]
 x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
@@ -609,8 +611,7 @@ def reshape_fmri(fmri):
     n_samples, n_x, n_y = fmri.shape
     return fmri.reshape((n_samples,n_x*n_y))
 
-def tfMRI_mask_train(i, data, label,condition_mask1, condition_mask):  
-    start_time = time.time()
+def tfMRI_mask_train(i, data, label,condition_mask1, condition_mask, new_masker):  
     re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (data[i][2:9]))
     if (re.shape[3] == 366):
         fmri_img = index_img(re, condition_mask1)
@@ -619,11 +620,9 @@ def tfMRI_mask_train(i, data, label,condition_mask1, condition_mask):
     tf_new_masked = new_masker.fit_transform(fmri_img)
     tf_train_masked.append(tf_new_masked)
     tf_train_label.append(label[i])
-    print(i)
-    print(tf_new_masked.shape)
-    print(time.time() - start_time)
+    print("Train mask process{0}%".format(round((i+1)*100/len(data))), end="\r")
 
-def tfMRI_mask_test(i, data, label, condition_mask1, condition_mask):  
+def tfMRI_mask_test(i, data, label, condition_mask1, condition_mask, new_masker):  
     start_time = time.time()
     re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (data[i][2:9]))
     if (re.shape[3] == 366):
@@ -633,9 +632,7 @@ def tfMRI_mask_test(i, data, label, condition_mask1, condition_mask):
     tf_new_masked = new_masker.fit_transform(fmri_img)
     tf_test_masked.append(tf_new_masked)
     tf_test_label.append(label[i])
-    print(i)
-    print(tf_new_masked.shape)
-    print(time.time() - start_time)
+    print("Test mask process{0}%".format(round((i+1)*100/len(data))), end="\r")
 
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
 y = np.repeat([1, 0], 234).ravel()
@@ -711,6 +708,7 @@ for i in range(0, x_inner_train.shape[0]):
     #print(len(score_map))
 
 perc = 35
+
 score_int = intersect_masks(score_map, threshold = perc*0.001)
 np.unique(score_int.get_data(), return_counts = True)
 plotting.plot_roi(score_int, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/tfMRI_SF05_MNI03_%s.png' % perc)
@@ -755,8 +753,69 @@ for i in range(len(p)):
     print(metrics.accuracy_score(tf_test_label, y_inner_pred))
     print(metrics.f1_score(tf_test_label, y_inner_pred))
 
+warnings.filterwarnings("ignore")
+polydegree = [1, 3, 5, 7]
+a = []
+f = []
+for j in range(5):
+j = 0
+train, test = list(outer_cv.split(filename, y))[j]
+x_train, x_test = np.array(filename['file'].loc[train]), np.array(filename['file'].loc[test])
+y_train, y_test = y[train], y[test]
+template = load_mni152_template()
+score_map = []
+for i in range(0, x_train.shape[0]):
+    score = np.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_SF_MNI_05score/%s_score.npy" % (x_train[i][2:9]))
+    df = using_multiindex(score, list('XYZ'))
+    dff = df.loc[df['A'] > 0.5]
+    dff.reset_index(drop = True, inplace = True)
+    score_binary = np.zeros_like(score)
+    for k in range(dff.shape[0]):
+        score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
+    score_map.append(new_img_like(template, score_binary))
+    print("Score mask reading process{0}%".format(round((i+1)*100/x_train.shape[0])), end="\r")
 
-for i in range()
+score_int = intersect_masks(score_map, threshold = 0.025)
+np.unique(score_int.get_data(), return_counts = True)
+new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
+condition_mask = np.repeat(True, 332).ravel()
+condition_mask1 = np.repeat(True, 366).ravel()
+condition_mask1[332:] = False
+tf_train_masked = []
+tf_train_label = []
+Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
+    delayed(tfMRI_mask_train)(
+        i, x_train, y_train, condition_mask1, condition_mask, new_masker
+    )
+    for i in range(0, x_train.shape[0])
+)
+tf_test_masked = []
+tf_test_label = []
+Parallel(n_jobs = 30, verbose = 0, require='sharedmem')(
+    delayed(tfMRI_mask_test)(
+        i, x_test, y_test, condition_mask1, condition_mask, new_masker
+    )
+    for i in range(0, x_test.shape[0])
+)
+a = []
+f = []
+for l in range(len(polydegree)):
+    model = SVC(kernel = "poly", degree = polydegree[l])
+    X = reshape_fmri(np.array(tf_train_masked))
+    clf = make_pipeline(StandardScaler(), model)
+    start_time = time.time()
+    clf.fit(X, tf_train_label)
+    print("Training time", time.time() - start_time)
+    Y = reshape_fmri(np.array(tf_test_masked))
+    start_time = time.time()
+    y_pred = clf.predict(Y)
+    print("Testing time", time.time() - start_time)
+    a.append(metrics.accuracy_score(tf_test_label, y_pred))
+    f.append(metrics.f1_score(tf_test_label, y_pred))
+
+print(np.mean(a))
+print(np.mean(f))
+        
 
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                      'C': [0.1, 1, 10, 100]},
