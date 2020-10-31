@@ -24,14 +24,18 @@ from nilearn.connectome import ConnectivityMeasure
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 from nilearn.datasets import load_mni152_template
+from sklearn.ensemble import RandomForestClassifier
 import time
 
-filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched25.csv', dtype = str)
+filename25 = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched25.csv', dtype = str)
+filename100 = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched100.csv', dtype = str)
+compoents25 = [1,  2,  3,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+compoents100 = [2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 48, 49, 50, 52, 53, 57, 58, 60, 63, 64, 93]
 ica = []
 label = []
-for i in range(0, filename.shape[0]):
-    
-    re = np.loadtxt(filename['file'].loc[i] + '/dr_stage1.txt', dtype = float)
+for i in range(0, filename25.shape[0]):  
+    re1 = np.loadtxt(filename25['file'].loc[i] + '/dr_stage1.txt', dtype = float)
+    re = re1[:, compoents25]
     ica.append(re)
     label.append(filename['label'].loc[i])
     print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
@@ -39,6 +43,7 @@ for i in range(0, filename.shape[0]):
 ica = np.asarray(ica)
 
 y = np.array(label).ravel()
+
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 10)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 10)
 for j in range(5):
@@ -61,15 +66,15 @@ y_pred = classifier.predict(Y)
 metrics.accuracy_score(y_inner_test, y_pred)
 metrics.f1_score(y_inner_test, y_pred, pos_label = '1')
 
-model =  SVC(kernel = 'linear')
+model =  SVC(kernel = 'rbf', gamma = 1e-3)
 model = RandomForestClassifier()
 model = LogisticRegression()
 #model = CalibratedClassifierCV(base_estimator=LinearSVC())
-outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 6)
+outer_cv = StratifiedKFold(n_splits=10, shuffle = True, random_state = 6)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 5)
 a = []
 f = []
-for j in range(5):
+for j in range(10):
   train, test = list(outer_cv.split(filename, y))[j]
   x_train, x_test = ica[train], ica[test]
   y_train, y_test = y[train], y[test]
