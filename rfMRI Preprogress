@@ -124,7 +124,7 @@ for i in range(0, filename.shape[0]):
         re = resample_to_img(fmri_img, template)
     else:
         re = resample_to_img(mri, template)
-    if ((re.shape == np.array([88, 88, 64, 523])).all()):
+    if ((re.shape == np.array([88, 88, 64, 490])).all()):
         nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/rfMNI_resample/%s_MNI.nii.gz" % (filename['eid'].loc[i]))
     else:
         er.append(i)
