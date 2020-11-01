@@ -292,10 +292,10 @@ for i in range(0, filename.shape[0]):
     #print(len(score_map))
 
 searchlight_img = new_img_like(template, score_map)
-plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 7, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_map,png')    
+plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 7, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_map.png')    
 
 searchlight_img = new_img_like(template, StandardScaler().fit_transform(score_map))
-plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 1.5, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_mean,png')    
+plotting.plot_img(searchlight_img, bg_img=template, title="Searchlight", display_mode="z", cut_coords=[-9], cmap='hot', threshold = 1.5, black_bg=True, output_file = '/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/plot_data/searchlightMNI9_mean.png')    
 
 i = 5
 start_time = time.time()
