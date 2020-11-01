@@ -28,10 +28,10 @@ from sklearn.ensemble import RandomForestClassifier
 import time
 
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched25.csv', dtype = str)
-filename.sort_values('label', ascending = False)
+filename = filename.sort_values('label', ascending = False)
 filename.reset_index(drop = True, inplace = True)
 compoents = [1,  2,  3,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-
+compoents = [i + 1 for i in compoents]
 ica = []
 label = []
 for i in range(0, filename.shape[0]):  
@@ -45,7 +45,7 @@ filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/moda
 filename = filename.sort_values('label', ascending = False)
 filename.reset_index(drop = True, inplace = True)
 compoents = [2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 48, 49, 50, 52, 53, 57, 58, 60, 63, 64, 93]
-
+compoents = [i + 1 for i in compoents]
 ica = []
 label = []
 for i in range(0, filename.shape[0]):  
@@ -115,17 +115,20 @@ ica = []
 label = []
 template = load_mni152_template()
 time_course = np.append([True]*490, [False]*33)
-
+er = []
 for i in range(0, filename.shape[0]):
-start_time = time.time()
-if (re.shape[2] == 532):
-    fmri_img = index_img(filename['file'].loc[i], time_course)
-    re = resample_to_img(fmri_img, template)
-else:
-    re = resample_to_img(filename['file'].loc[i], template)
-
-nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/rfMNI_resample/%s_MNI.nii.gz" % (filename['eid'].loc[i]))
-print(time.time() - start_time)    
+    start_time = time.time()
+    mri = nib.load(filename['file'].loc[i])
+    if (mri.shape[2] == 523):
+        fmri_img = index_img(mri, time_course)
+        re = resample_to_img(fmri_img, template)
+    else:
+        re = resample_to_img(mri, template)
+    if ((re.shape == np.array([88, 88, 64, 523])).all()):
+        nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/rfMNI_resample/%s_MNI.nii.gz" % (filename['eid'].loc[i]))
+    else:
+        er.append(i)
+    print(time.time() - start_time)    
     
     print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
     
