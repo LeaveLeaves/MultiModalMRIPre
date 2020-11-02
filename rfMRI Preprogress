@@ -19,12 +19,14 @@ from sklearn.pipeline import make_pipeline
 import joblib
 from sklearn.svm import SVC
 from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
+from nilearn import plotting
 from sklearn.metrics import confusion_matrix
 from nilearn.connectome import ConnectivityMeasure
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 from nilearn.datasets import load_mni152_template
 from sklearn.ensemble import RandomForestClassifier
+import warnings
 import time
 
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched25.csv', dtype = str)
@@ -110,26 +112,26 @@ print(f)
 print("a = ", np.mean(a))
 print("f = ", np.mean(f))
 
+warnings.filterwarnings("ignore")
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_rfMRI_Matched.csv', dtype = str)
 ica = []
 label = []
 template = load_mni152_template()
 time_course = np.append([True]*490, [False]*33)
 er = []
-for i in range(0, filename.shape[0]):
+for i in range(2, filename.shape[0]):
     start_time = time.time()
     mri = nib.load(filename['file'].loc[i])
-    if (mri.shape[2] == 523):
+    if (mri.shape[3] == 523):
         fmri_img = index_img(mri, time_course)
         re = resample_to_img(fmri_img, template)
     else:
         re = resample_to_img(mri, template)
-    if ((re.shape == np.array([88, 88, 64, 490])).all()):
+    if ((re.shape == np.array([91, 109, 91, 490])).all()):
         nib.save(re, "/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/rfMNI_resample/%s_MNI.nii.gz" % (filename['eid'].loc[i]))
     else:
         er.append(i)
     print(time.time() - start_time)    
-    
     print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
     
     re = np.loadtxt(filename['file'].loc[i] + '/dr_stage1.txt', dtype = float)
