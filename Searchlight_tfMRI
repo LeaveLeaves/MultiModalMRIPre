@@ -620,15 +620,18 @@ def reshape_fmri(fmri):
     n_samples, n_x, n_y = fmri.shape
     return fmri.reshape((n_samples,n_x*n_y))
 
+new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
+
 def tfMRI_mask_train(i, data, label,condition_mask1, condition_mask, new_masker):  
-    re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (data[i][2:9]))
-    if (re.shape[3] == 366):
-        fmri_img = index_img(re, condition_mask1)
-    else:
-        fmri_img = index_img(re, condition_mask)    
-    tf_new_masked = new_masker.fit_transform(fmri_img)
-    tf_train_masked.append(tf_new_masked)
-    tf_train_label.append(label[i])
+re = nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/tfMNI_resample/%s_MNI.nii.gz" % (data[i][2:9]))
+if (re.shape[3] == 366):
+    fmri_img = index_img(re, condition_mask1)
+else:
+    fmri_img = index_img(re, condition_mask)    
+
+tf_new_masked = new_masker.fit_transform(fmri_img)
+tf_train_masked.append(tf_new_masked)
+tf_train_label.append(label[i])
     print("Train mask process{0}%".format(round((i+1)*100/len(data))), end="\r")
 
 def tfMRI_mask_test(i, data, label, condition_mask1, condition_mask, new_masker):  
@@ -642,7 +645,15 @@ def tfMRI_mask_test(i, data, label, condition_mask1, condition_mask, new_masker)
     tf_test_masked.append(tf_new_masked)
     tf_test_label.append(label[i])
     print("Test mask process{0}%".format(round((i+1)*100/len(data))), end="\r")
-
+-----------------------
+score_map = []
+for i in range(0, filename.shape[0]):
+    score_map.append(nib.load("/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/Searchlight_FR_05score/%s_score.nii.gz" % (filename['file'].loc[i][2:9])))
+    print("Score mask reading process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+ 
+score_int = intersect_masks(score_map, threshold = 0.60)
+np.unique(score_int.get_data(), return_counts = True)
+-----------------------
 filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/MD_HC_tfMRI.csv', dtype = str)
 #y = np.repeat([1, 0], 234).ravel()
 outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 12)
@@ -785,7 +796,7 @@ for j in range(5):
             score_binary[dff['X'][k]][dff['Y'][k]][dff['Z'][k]] = 1
         score_map.append(new_img_like(template, score_binary))
         print("Score mask reading process{0}%".format(round((i+1)*100/x_train.shape[0])), end="\r")
-    score_int = intersect_masks(score_map, threshold = 0.025)
+    score_int = intersect_masks(score_map, threshold = 0.03)
     np.unique(score_int.get_data(), return_counts = True)
     new_masker = NiftiMasker(mask_img = score_int,  memory="nilearn_cache", memory_level=1)
     condition_mask = np.repeat(True, 332).ravel()
