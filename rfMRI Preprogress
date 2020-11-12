@@ -83,7 +83,7 @@ y_pred = classifier.predict(Y)
 metrics.accuracy_score(y_inner_test, y_pred)
 metrics.f1_score(y_inner_test, y_pred, pos_label = '1')
 
-model =  SVC(kernel = 'rbf', gamma = 1e-3)
+model =  SVC(kernel = 'rbf', gamma = 1e-3, probability = True)
 model = RandomForestClassifier()
 model = LogisticRegression()
 #model = CalibratedClassifierCV(base_estimator=LinearSVC())
@@ -91,7 +91,7 @@ outer_cv = StratifiedKFold(n_splits=10, shuffle = True, random_state = 6)
 inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 5)
 a = []
 f = []
-for j in range(10):
+for j in range(5):
   train, test = list(outer_cv.split(filename, y))[j]
   x_train, x_test = ica[train], ica[test]
   y_train, y_test = y[train], y[test]
