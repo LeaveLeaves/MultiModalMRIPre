@@ -1,0 +1,182 @@
+import numpy as np
+import pandas as pd
+from nilearn.image import new_img_like, load_img, get_data
+from nilearn.image import resample_to_img
+from sklearn.model_selection import KFold
+from nilearn.image import index_img
+import nilearn.decoding
+from nilearn.input_data import NiftiMasker
+import nilearn as nil
+import nibabel as nib
+from sklearn.model_selection import StratifiedKFold
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import GridSearchCV
+from sklearn import metrics
+from nilearn.masking import intersect_masks
+from joblib import Parallel, delayed
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+import joblib
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve, average_precision_score 
+from nilearn import plotting
+from sklearn.metrics import confusion_matrix
+from nilearn.connectome import ConnectivityMeasure
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.linear_model import LogisticRegression
+from nilearn.datasets import load_mni152_template
+from sklearn.ensemble import RandomForestClassifier
+import warnings
+import time
+
+filename = pd.read_csv('Z:\\Projects\\ZhiYe_MasterThesis\\modality\\MD_HC_rfMRI_Matched25.csv', dtype = str)
+filename = filename.sort_values('label', ascending = False)
+filename.reset_index(drop = True, inplace = True)
+compoents = [1,  2,  3,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+compoents = [i + 1 for i in compoents]
+ica = []
+label = []
+for i in range(0, filename.shape[0]):  
+    re1 = np.loadtxt("Z:\\Data\\UKBiobank\\brain_mri\\bulk\\%s_20227_2_0\\fMRI\\rfMRI_25.dr\\dr_stage1.txt" % (filename['file'].loc[i][2:9]))
+    re = re1[:, compoents]
+    ica.append(re)
+    label.append(filename['label'].loc[i])
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+    
+ica = np.asarray(ica)
+y = np.array(label).ravel()
+np.save('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA25.npy', ica)
+np.save('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA25_label.npy', y)
+
+ica = np.load('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA100.npy', allow_pickle = True)
+y = np.load('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA100_label.npy')
+
+ica = np.load('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA25.npy', allow_pickle = True)
+y = np.load('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA25_label.npy')
+
+filename = pd.read_csv('Z:\\Projects\\ZhiYe_MasterThesis\\modality\\MD_HC_rfMRI_Matched100.csv', dtype = str)
+filename = filename.sort_values('label', ascending = False)
+filename.reset_index(drop = True, inplace = True)
+compoents = [2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 48, 49, 50, 52, 53, 57, 58, 60, 63, 64, 93]
+compoents = [i + 1 for i in compoents]
+ica = []
+label = []
+for i in range(0, filename.shape[0]):  
+    re1 = np.loadtxt("Z:\\Data\\UKBiobank\\brain_mri\\bulk\\%s_20227_2_0\\fMRI\\rfMRI_100.dr\\dr_stage1.txt" % (filename['file'].loc[i][2:9]))
+    re = re1[:, compoents]
+    ica.append(re)
+    label.append(filename['label'].loc[i])
+    print("Process{0}%".format(round((i+1)*100/filename.shape[0])), end="\r")
+
+ica = np.asarray(ica)
+
+y = np.array(label).ravel()
+
+np.save('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA100.npy', ica)
+np.save('Z:\\Projects\\ZhiYe_MasterThesis\\rfICA100_label.npy', y)
+
+accuracy = []
+f1 = []
+recall = []
+precision_plot = []
+recall_plot = []
+precision = []
+spcificty = []
+tprs = []
+fprs = []
+aucs = []
+mean_fpr = np.linspace(0, 1, 100)
+AUROCl = []
+AUPRl = []
+y_truel = []
+y_probal = []
+AUROC = []
+AUPR = []
+y_true = []
+y_proba = []
+AUROCr = []
+AUPRr = []
+y_truer = []
+y_probar = []
+
+p_grid = {'randomforestclassifier__max_depth': [10, 50, 100, 200, None]}
+model = RandomForestClassifier()
+p_grid = {'calibratedclassifiercv__base_estimator__C': [0.1, 1, 10, 100]}
+model = CalibratedClassifierCV(base_estimator=LinearSVC(max_iter = 10000))
+p_grid = {'svc__C': [0.1, 1, 10, 100], 'svc__gamma': [1e-3, 1e-4, 'scale']}
+model =  SVC(kernel = 'rbf',  probability = True)
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 0)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 0)
+for j in range(5):
+    train, test = list(outer_cv.split(filename, y))[j]
+    x_train, x_test = ica[train], ica[test]
+    y_train, y_test = y[train], y[test]
+    kinds = ['correlation', 'partial correlation', 'tangent']
+    connectivity = ConnectivityMeasure(kind=kinds[2], vectorize=True)
+    X = connectivity.fit_transform(x_train)
+    Y = connectivity.transform(x_test)
+    # fit the classifier
+    classifier = make_pipeline(StandardScaler(), model)
+    clf = GridSearchCV(estimator = classifier, param_grid = p_grid, cv = inner_cv, scoring = "accuracy")
+    clf.fit(X, y_train)
+    print(clf.best_estimator_)
+    
+#model =  SVC(kernel = 'rbf', gamma = 1e-3, C = 10, probability = True)
+model =  SVC(kernel = 'rbf',  probability = True)
+model = CalibratedClassifierCV(base_estimator=LinearSVC(max_iter = 10000))
+model = RandomForestClassifier(criterion = 'entropy')
+outer_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 0)
+inner_cv = StratifiedKFold(n_splits=5, shuffle = True, random_state = 0)
+for j in range(5):
+    train, test = list(outer_cv.split(filename, y))[j]
+    x_train, x_test = ica[train], ica[test]
+    y_train, y_test = y[train], y[test]
+    kinds = ['correlation', 'partial correlation', 'tangent']
+    connectivity = ConnectivityMeasure(kind=kinds[2], vectorize=True)
+    X = connectivity.fit_transform(x_train)
+    Y = connectivity.transform(x_test)
+    # fit the classifier
+    classifier = make_pipeline(StandardScaler(), model)
+    classifier.fit(X, y_train)
+    # make predictions for the left-out test subjects
+    y_pred = classifier.predict(Y)
+    a = metrics.accuracy_score(y_test, y_pred)
+    f = metrics.f1_score(y_test, y_pred, pos_label = '1')
+    r = metrics.recall_score(y_test, y_pred, average='binary', pos_label = '1')
+    p = metrics.precision_score(y_test, y_pred, average='binary', pos_label = '1')
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    s = tn / (tn+fp)
+    #print(a)
+    #print(f)
+    accuracy.append(a)
+    f1.append(f)
+    recall.append(r)
+    precision.append(p)
+    spcificty.append(s)
+    y_score = classifier.predict_proba(Y)[:,1]
+    y_true.append(y_test) 
+    y_proba.append(y_score)
+    pre, re, thresholds = precision_recall_curve(y_test, y_score, pos_label = '1')
+    AUPR.append(auc(re, pre))
+    fpr, tpr, thresholds = roc_curve(y_test, y_score, drop_intermediate = False, pos_label = '1')
+    AUROC.append(auc(fpr, tpr))
+print(np.mean(accuracy))
+print(np.std(accuracy))
+
+print(np.mean(f1))
+print(np.std(f1))
+
+print(np.mean(recall))
+print(np.std(recall))
+
+print(np.mean(precision))
+print(np.std(precision))
+
+print(np.mean(spcificty))
+print(np.std(spcificty))
+
+print(np.mean(AUROCr))
+print(np.std(AUROC))
+
+print(np.mean(AUPRr))
+print(np.std(AUPR))
