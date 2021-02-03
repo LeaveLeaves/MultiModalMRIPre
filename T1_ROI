@@ -29,6 +29,14 @@ from nilearn.datasets import load_mni152_template
 from sklearn.ensemble import RandomForestClassifier
 import warnings
 import time
+from nilearn import datasets
+from nilearn.input_data import NiftiLabelsMasker
+
+aal_atlas = datasets.fetch_atlas_aal()
+masker = NiftiLabelsMasker(labels_img=aal_atlas.maps, standardize=True,
+                           memory='nilearn_cache', verbose=5, resampling_target = 'labels')
+
+w = masker.fit_transform(template)
 
 accuracy = []
 f1 = []
