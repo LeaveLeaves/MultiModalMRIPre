@@ -29,3 +29,52 @@ from nilearn.datasets import load_mni152_template
 from sklearn.ensemble import RandomForestClassifier
 import warnings
 import time
+
+accuracy = []
+f1 = []
+recall = []
+precision_plot = []
+recall_plot = []
+precision = []
+spcificty = []
+tprs = []
+fprs = []
+aucs = []
+mean_fpr = np.linspace(0, 1, 100)
+AUROC = []
+AUPR = []
+y_true = []
+y_proba = []
+
+model = base_model
+outer_cv = StratifiedKFold(n_splits = cv_fold, shuffle = True, random_state = i)
+inner_cv = StratifiedKFold(n_splits = cv_fold, shuffle = True, random_state = i)
+
+#run outter CV to evaluate model
+for j, (train, test) in enumerate(outer_cv.split(X, y)):
+    #split dataset to decoding set and test set
+    x_train, x_test = X[train], X[test]
+    y_train, y_test = y[train], y[test]
+    #find optim paramater setting in the inner cv
+    clf = GridSearchCV(estimator = model, param_grid = p_grid, cv = inner_cv, scoring = "recall")
+    clf.fit(x_train, y_train)
+
+    #predict labels on the test set
+    y_pred = clf.predict(x_test)
+    #calculate metrics
+    a = metrics.accuracy_score(y_test, y_pred)
+    f = metrics.f1_score(y_test, y_pred)
+    r = metrics.recall_score(y_test, y_pred, average='binary')
+    p = metrics.precision_score(y_test, y_pred, average='binary')
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    s = tn / (tn+fp)
+    accuracy.append(a)
+    f1.append(f)
+    recall.append(r)
+    precision.append(p)
+    spcificty.append(s)
+    y_score = clf.predict_proba(x_test)[:,1]
+    pre, re, thresholds = precision_recall_curve(y_test, y_score)
+    AUPR.append(auc(re, pre))
+    fpr, tpr, thresholds = roc_curve(y_test, y_score)
+    AUROC.append(auc(fpr, tpr))
