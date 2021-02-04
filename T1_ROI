@@ -35,8 +35,16 @@ from nilearn.input_data import NiftiLabelsMasker
 aal_atlas = datasets.fetch_atlas_aal()
 masker = NiftiLabelsMasker(labels_img=aal_atlas.maps, standardize=True,
                            memory='nilearn_cache', verbose=5, resampling_target = 'labels')
+filename = pd.read_csv('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/modality/MD_HC_T1', dtype = str)
 
-w = masker.fit_transform(template)
+mri = []
+for i in range(0, filename.shape[0]):
+   mri.append(masker.fit_transform(filename['file'].loc[i]))
+   print(i)
+   print(mri[i].shape)
+
+mri = np.reshape(np.array(mri), (-1, mri[0].shape[1]))
+np.save('/links/groups/borgwardt/Projects/ZhiYe_MasterThesis/T1_ROI.npy', mri)
 
 accuracy = []
 f1 = []
