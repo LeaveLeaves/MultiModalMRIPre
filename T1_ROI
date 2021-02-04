@@ -65,8 +65,8 @@ y_true = []
 y_proba = []
 
 model = base_model
-outer_cv = StratifiedKFold(n_splits = cv_fold, shuffle = True, random_state = i)
-inner_cv = StratifiedKFold(n_splits = cv_fold, shuffle = True, random_state = i)
+outer_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
+inner_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
 
 #run outter CV to evaluate model
 for j, (train, test) in enumerate(outer_cv.split(X, y)):
