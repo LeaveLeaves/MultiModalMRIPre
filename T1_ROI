@@ -64,7 +64,8 @@ AUPR = []
 y_true = []
 y_proba = []
 
-model = base_model
+model = CalibratedClassifierCV(base_estimator=LinearSVC(max_iter = 10000))
+p_grid = {'calibratedclassifiercv__base_estimator__C': [0.1, 1, 10, 100]}
 outer_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
 inner_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
 
@@ -75,10 +76,14 @@ for j, (train, test) in enumerate(outer_cv.split(X, y)):
     y_train, y_test = y[train], y[test]
     #find optim paramater setting in the inner cv
     clf = GridSearchCV(estimator = model, param_grid = p_grid, cv = inner_cv, scoring = "recall")
+    start_time = time.time()
     clf.fit(x_train, y_train)
+    print('train')
 
     #predict labels on the test set
     y_pred = clf.predict(x_test)
+    print(j)
+    print(time.time() - start_time)
     #calculate metrics
     a = metrics.accuracy_score(y_test, y_pred)
     f = metrics.f1_score(y_test, y_pred)
