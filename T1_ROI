@@ -70,6 +70,9 @@ p_grid = {'calibratedclassifiercv__base_estimator__C': [0.1, 1, 10, 100]}
 p_grid = {'randomforestclassifier__max_depth': [10, 50, 100, 200, None]}
 model = RandomForestClassifier()
 
+p_grid = {'svc__C': [0.1, 1, 10, 100], 'svc__gamma': [1e-3, 1e-4, 'scale']}
+model =  SVC(kernel = 'rbf',  probability = True)
+
 outer_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
 inner_cv = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
 X = mri
